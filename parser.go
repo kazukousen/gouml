@@ -125,8 +125,19 @@ func (p Parser) parseFuncType(from Vertex, funcDecl *ast.FuncDecl) (string, stri
 
 	if funcDecl.Type.Results != nil {
 		for _, result := range funcDecl.Type.Results.List {
-			for _, name := range result.Names {
-				ft.Results = append(ft.Results, NameTypeKV{Name: name.Name, Type: p.parsefieldTypeName(result.Type).String()})
+			var name string
+			for _, n := range result.Names {
+				name = n.Name
+			}
+			ftn := p.parsefieldTypeName(result.Type)
+			ft.Results = append(ft.Results, NameTypeKV{Name: name, Type: ftn.String()})
+			pkg, typ, isArray := ftn.kv()
+			if len(pkg) == 0 {
+				pkg = from.Pkg
+			}
+			if _, ok := p.typeDefinitions[pkg][typ]; ok {
+				to := Vertex{Pkg: pkg, Name: typ}
+				edges = append(edges, FuncEdge{From: from, To: to, IsArray: isArray})
 			}
 		}
 	}

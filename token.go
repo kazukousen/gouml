@@ -151,7 +151,10 @@ type NameTypeKVList []NameTypeKV
 func (list NameTypeKVList) String() string {
 	dst := make([]string, len(list))
 	for i, kv := range list {
-		dst[i] = kv.Name + ": " + kv.Type
+		if len(kv.Name) != 0 {
+			dst[i] += kv.Name + ": "
+		}
+		dst[i] += kv.Type
 	}
 	return strings.Join(dst, ", ")
 }
