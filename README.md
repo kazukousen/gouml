@@ -10,3 +10,7 @@ Run `gouml init` . This will parse `.go` files and generate the plantUML file.
 ```sh
 $ gouml init -d example/model/
 ```
+
+## Example
+
+![sample image](/sample.png)
