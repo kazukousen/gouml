@@ -237,12 +237,12 @@ func (fm fieldMap) String() string {
 
 func (p Parser) print() []string {
 	lines := []string{}
-	es := []string{}
+	es := map[string]struct{}{}
 	for pkg, types := range p.typeDefinitions {
 		for typeName, typeSpec := range types {
 			token, e := p.parseType(Vertex{Pkg: pkg, Name: typeName}, typeSpec.Type)
 			lines = append(lines, token)
-			es = append(es, e)
+			es[e] = struct{}{}
 		}
 	}
 
@@ -251,11 +251,11 @@ func (p Parser) print() []string {
 			for _, funcDecl := range funcDecls {
 				fn, e := p.parseFuncType(Vertex{Pkg: pkg, Name: typeName}, funcDecl)
 				lines = append(lines, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), fn))
-				es = append(es, e)
+				es[e] = struct{}{}
 			}
 		}
 	}
-	for _, e := range es {
+	for e := range es {
 		lines = append(lines, e)
 	}
 
