@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -15,6 +16,7 @@ import (
 type Parser struct {
 	files           map[string]*ast.File
 	typeDefinitions map[string]map[string]*ast.TypeSpec
+	funcDefinitions map[string]map[string]*ast.FuncDecl
 }
 
 // NewParser ...
@@ -22,6 +24,7 @@ func NewParser() *Parser {
 	return &Parser{
 		files:           map[string]*ast.File{},
 		typeDefinitions: map[string]map[string]*ast.TypeSpec{},
+		funcDefinitions: map[string]map[string]*ast.FuncDecl{},
 	}
 }
 
@@ -31,8 +34,14 @@ func (p *Parser) Parse(baseDir string) error {
 
 	p.storeTypeSpecs()
 
-	p.print()
-
+	lines := p.print()
+	uml, err := os.Create(path.Join(baseDir, "class.uml"))
+	if err != nil {
+		return err
+	}
+	defer uml.Close()
+	fmt.Fprintf(uml, "%s\n", strings.Join(lines, "\n"))
+	fmt.Println("ok")
 	return nil
 }
 
@@ -70,12 +79,61 @@ func (p Parser) skip(f os.FileInfo) error {
 }
 
 func (p Parser) storeTypeSpecs() {
-	for k, ast := range p.files {
-		p.storeTypeSpec(k, ast)
+	for _, ast := range p.files {
+		p.storeTypeSpec(ast)
+		p.storeFuncDecl(ast)
 	}
 }
 
-func (p *Parser) storeTypeSpec(fileName string, astFile *ast.File) {
+func (p *Parser) storeFuncDecl(astFile *ast.File) {
+	pkg := astFile.Name.Name
+	for _, decl := range astFile.Decls {
+		if funcDecl, ok := decl.(*ast.FuncDecl); ok && funcDecl.Recv != nil {
+			for _, field := range funcDecl.Recv.List {
+				recv := fmt.Sprintf("%s", field.Type)
+				if _, ok := p.typeDefinitions[pkg][recv]; ok {
+					if _, ok := p.funcDefinitions[pkg]; !ok {
+						p.funcDefinitions[pkg] = map[string]*ast.FuncDecl{}
+					}
+					p.funcDefinitions[pkg][recv] = funcDecl
+				}
+			}
+		}
+	}
+}
+
+func (p Parser) parseFuncType(from Vertex, funcDecl *ast.FuncDecl) (string, string) {
+	funcName := funcDecl.Name.Name
+	ft := FuncToken{Name: funcName}
+	edges := FuncEdges{}
+	if funcDecl.Type.Params != nil {
+		for _, param := range funcDecl.Type.Params.List {
+			for _, name := range param.Names {
+				ftn := p.parsefieldTypeName(param.Type)
+				ft.Params = append(ft.Params, NameTypeKV{Name: name.Name, Type: ftn.String()})
+				pkg, typ, isArray := ftn.kv()
+				if len(pkg) == 0 {
+					pkg = from.Pkg
+				}
+				if _, ok := p.typeDefinitions[pkg][typ]; ok {
+					to := Vertex{Pkg: pkg, Name: typ}
+					edges = append(edges, FuncEdge{From: from, To: to, IsArray: isArray})
+				}
+			}
+		}
+	}
+
+	if funcDecl.Type.Results != nil {
+		for _, result := range funcDecl.Type.Results.List {
+			for _, name := range result.Names {
+				ft.Results = append(ft.Results, NameTypeKV{Name: name.Name, Type: p.parsefieldTypeName(result.Type).String()})
+			}
+		}
+	}
+	return ft.String(), edges.String()
+}
+
+func (p *Parser) storeTypeSpec(astFile *ast.File) {
 	pkg := astFile.Name.Name
 	for _, decl := range astFile.Decls {
 		// decl is a declaration node on top-level
@@ -87,7 +145,6 @@ func (p *Parser) storeTypeSpec(fileName string, astFile *ast.File) {
 						p.typeDefinitions[pkg] = map[string]*ast.TypeSpec{}
 					}
 					p.typeDefinitions[pkg][typeSpec.Name.Name] = typeSpec
-					fmt.Printf("pkg=%s, name=%s\n", pkg, typeSpec.Name.Name)
 				}
 			}
 		}
@@ -131,20 +188,19 @@ func (f fieldTypeName) kv() (string, string, bool) {
 	return "", "", isArray
 }
 
-func (p *Parser) parseType(pkgName, typeName string, expr ast.Expr) (*Token, Edges) {
+func (p *Parser) parseType(from Vertex, expr ast.Expr) (string, string) {
 	tokenFieldNames := NewTokenFieldNames()
 	edges := Edges{}
 	switch expr := expr.(type) {
 	// type Foo struct{...}
 	case *ast.StructType:
-		from := Vertex{Pkg: pkgName, Name: typeName}
 		for _, field := range expr.Fields.List {
 			for _, name := range field.Names {
 				fieldTypeName := p.parsefieldTypeName(field.Type)
 				tokenFieldNames.Add(name.Name, fieldTypeName.String())
 				pkg, typ, isArray := fieldTypeName.kv()
 				if len(pkg) == 0 {
-					pkg = pkgName
+					pkg = from.Pkg
 				}
 				if _, ok := p.typeDefinitions[pkg][typ]; ok {
 					to := Vertex{Pkg: pkg, Name: typ}
@@ -155,7 +211,7 @@ func (p *Parser) parseType(pkgName, typeName string, expr ast.Expr) (*Token, Edg
 	// type Foo Baz
 	case *ast.Ident:
 	}
-	return NewToken(pkgName, typeName, objKindValueObject, tokenFieldNames), edges
+	return NewToken(from.Pkg, from.Name, objKindValueObject, tokenFieldNames).String(), edges.String()
 }
 
 type fieldMap map[string]string
@@ -168,16 +224,27 @@ func (fm fieldMap) String() string {
 	return dst
 }
 
-func (p Parser) print() {
-	edgess := []Edges{}
+func (p Parser) print() []string {
+	lines := []string{}
+	es := []string{}
 	for pkg, types := range p.typeDefinitions {
 		for typeName, typeSpec := range types {
-			token, edges := p.parseType(pkg, typeName, typeSpec.Type)
-			fmt.Println(token.String())
-			edgess = append(edgess, edges)
+			token, e := p.parseType(Vertex{Pkg: pkg, Name: typeName}, typeSpec.Type)
+			lines = append(lines, token)
+			es = append(es, e)
 		}
 	}
-	for _, edges := range edgess {
-		fmt.Println(edges.String())
+
+	for pkg, types := range p.funcDefinitions {
+		for typeName, funcDecl := range types {
+			fn, e := p.parseFuncType(Vertex{Pkg: pkg, Name: typeName}, funcDecl)
+			lines = append(lines, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), fn))
+			es = append(es, e)
+		}
 	}
+	for _, e := range es {
+		lines = append(lines, e)
+	}
+
+	return lines
 }

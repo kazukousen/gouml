@@ -33,7 +33,7 @@ func (fs TokenFieldNames) Add(name string, typeName string) {
 func (fs TokenFieldNames) String() string {
 	var dst string
 	for k, v := range fs {
-		dst += fmt.Sprintf("\t\t%s %s\n", k, v)
+		dst += fmt.Sprintf("\t\t%s%s %s\n", exportedIdentifier(k[0]), k, v)
 	}
 	return dst
 }
@@ -88,6 +88,24 @@ func (es Edges) String() string {
 	return strings.Join(dst, "\n")
 }
 
+// FuncEdges ...
+type FuncEdges []FuncEdge
+
+func (fes FuncEdges) String() string {
+	dst := make([]string, 0, len(fes))
+	for _, fe := range fes {
+		dst = append(dst, fe.String())
+	}
+	return strings.Join(dst, "\n")
+}
+
+// FuncEdge ...
+type FuncEdge Edge
+
+func (fe FuncEdge) String() string {
+	return fe.From.hash() + " ..> " + fe.To.hash() + " : <<use>>"
+}
+
 // Edge ...
 type Edge struct {
 	From    Vertex
@@ -98,9 +116,9 @@ type Edge struct {
 func (e Edge) String() string {
 	var rel string
 	if e.IsArray {
-		rel = "*--"
+		rel = " *-- "
 	} else {
-		rel = "-->"
+		rel = " --> "
 	}
 	return e.From.hash() + rel + e.To.hash()
 }
@@ -113,4 +131,54 @@ type Vertex struct {
 
 func (v Vertex) hash() string {
 	return NewHash(v.Pkg, v.Name)
+}
+
+// FuncToken ...
+type FuncToken struct {
+	Name    string
+	Params  NameTypeKVList
+	Results NameTypeKVListForResult
+}
+
+func (ft FuncToken) String() string {
+	return fmt.Sprintf("%s%s(%s)%s",
+		exportedIdentifier(ft.Name[0]), ft.Name, ft.Params.String(), ft.Results.String())
+}
+
+// NameTypeKVList ...
+type NameTypeKVList []NameTypeKV
+
+func (list NameTypeKVList) String() string {
+	dst := make([]string, len(list))
+	for i, kv := range list {
+		dst[i] = kv.Name + ": " + kv.Type
+	}
+	return strings.Join(dst, ", ")
+}
+
+// NameTypeKV ...
+type NameTypeKV struct {
+	Name string
+	Type string
+}
+
+// NameTypeKVListForResult ...
+type NameTypeKVListForResult NameTypeKVList
+
+func (list NameTypeKVListForResult) String() string {
+	results := NameTypeKVList(list).String()
+	if strings.Index(results, ",") != -1 {
+		results = "(" + results + ")"
+	}
+	if len(results) != 0 {
+		results = ": " + results
+	}
+	return results
+}
+
+func exportedIdentifier(c byte) string {
+	if c >= 'A' && c <= 'Z' {
+		return "+"
+	}
+	return "-"
 }
