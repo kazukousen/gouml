@@ -16,7 +16,7 @@ import (
 type Parser struct {
 	files           map[string]*ast.File
 	typeDefinitions map[string]map[string]*ast.TypeSpec
-	funcDefinitions map[string]map[string]*ast.FuncDecl
+	funcDefinitions map[string]map[string][]*ast.FuncDecl
 }
 
 // NewParser ...
@@ -24,7 +24,7 @@ func NewParser() *Parser {
 	return &Parser{
 		files:           map[string]*ast.File{},
 		typeDefinitions: map[string]map[string]*ast.TypeSpec{},
-		funcDefinitions: map[string]map[string]*ast.FuncDecl{},
+		funcDefinitions: map[string]map[string][]*ast.FuncDecl{},
 	}
 }
 
@@ -93,9 +93,9 @@ func (p *Parser) storeFuncDecl(astFile *ast.File) {
 				recv := fmt.Sprintf("%s", field.Type)
 				if _, ok := p.typeDefinitions[pkg][recv]; ok {
 					if _, ok := p.funcDefinitions[pkg]; !ok {
-						p.funcDefinitions[pkg] = map[string]*ast.FuncDecl{}
+						p.funcDefinitions[pkg] = map[string][]*ast.FuncDecl{}
 					}
-					p.funcDefinitions[pkg][recv] = funcDecl
+					p.funcDefinitions[pkg][recv] = append(p.funcDefinitions[pkg][recv], funcDecl)
 				}
 			}
 		}
@@ -236,10 +236,12 @@ func (p Parser) print() []string {
 	}
 
 	for pkg, types := range p.funcDefinitions {
-		for typeName, funcDecl := range types {
-			fn, e := p.parseFuncType(Vertex{Pkg: pkg, Name: typeName}, funcDecl)
-			lines = append(lines, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), fn))
-			es = append(es, e)
+		for typeName, funcDecls := range types {
+			for _, funcDecl := range funcDecls {
+				fn, e := p.parseFuncType(Vertex{Pkg: pkg, Name: typeName}, funcDecl)
+				lines = append(lines, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), fn))
+				es = append(es, e)
+			}
 		}
 	}
 	for _, e := range es {
