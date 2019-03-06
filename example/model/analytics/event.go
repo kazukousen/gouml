@@ -3,33 +3,29 @@ package analytics
 import (
 	"time"
 
-	"github.com/kazukousen/gouml/example/model/adexchange"
+	"github.com/kazukousen/gouml/example/model/item"
 )
 
-// BeaconEvents object
-type BeaconEvents []BeaconEvent
+// Orders object
+type Orders []Order
 
-func (r BeaconEvents) extractWithInRange(dateRange DateRange) BeaconEvents {
-	dst := make(BeaconEvents, 0, len(r))
-	for _, event := range r {
-		if event.FiredBetween(dateRange) {
-			dst = append(dst, event)
+func (os Orders) extractWithInRange(dateRange DateRange) Orders {
+	dst := make(Orders, 0, len(os))
+	for _, order := range os {
+		if order.StoredBetween(dateRange) {
+			dst = append(dst, order)
 		}
 	}
 	return dst
 }
 
-// BeaconEvent object
-type BeaconEvent struct {
-	Code      BeaconEventCode
-	Pricing   adexchange.Pricing
-	FiredTime time.Time
+// Order object
+type Order struct {
+	Pricing    item.Pricing
+	StoredTime time.Time
 }
 
-// FiredBetween ...
-func (e BeaconEvent) FiredBetween(dateRange DateRange) bool {
-	return dateRange.Include(e.FiredTime)
+// StoredBetween ...
+func (o Order) StoredBetween(dateRange DateRange) bool {
+	return dateRange.Include(o.StoredTime)
 }
-
-// BeaconEventCode object
-type BeaconEventCode string

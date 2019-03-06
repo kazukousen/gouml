@@ -1,19 +1,19 @@
 package analytics
 
-// BeaconEventReport object
-type BeaconEventReport struct {
-	Events    BeaconEvents
+// OrderReport object
+type OrderReport struct {
+	Orders    Orders
 	DateRange DateRange
 }
 
 // SummarizeWithInDateRange ...
-func (r BeaconEventReport) SummarizeWithInDateRange() (uint, float64) {
-	return r.summarize(r.Events.extractWithInRange(r.DateRange))
+func (r OrderReport) SummarizeWithInDateRange() (uint, float64) {
+	return r.summarize(r.Orders.extractWithInRange(r.DateRange))
 }
 
-func (r BeaconEventReport) summarize(events BeaconEvents) (count uint, revenue float64) {
-	for _, e := range events {
-		revenue += e.Pricing.PriceOfUnit()
+func (r OrderReport) summarize(orders Orders) (count uint, revenue float64) {
+	for _, o := range orders {
+		revenue += o.Pricing.PriceOfUnit()
 		count++
 	}
 	return
