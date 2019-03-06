@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -21,7 +20,8 @@ func main() {
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
 				baseDir := c.String("dir")
-				return gouml.NewRunner().Run(baseDir)
+				out := c.String("out")
+				return gouml.NewRunner().Run(baseDir, out)
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -29,22 +29,10 @@ func main() {
 					Value: "./",
 					Usage: "Directory you want to parse",
 				},
-			},
-		},
-		{
-			Name:    "hello",
-			Aliases: []string{"h"},
-			Usage:   "Create *.uml",
-			Action: func(c *cli.Context) error {
-				baseDir := c.String("dir")
-				fmt.Println(baseDir)
-				return nil
-			},
-			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "dir, d",
-					Value: "./",
-					Usage: "Directory you want to parse",
+					Name:  "out, o",
+					Value: "class",
+					Usage: "File Name (*.uml) you want to parsed",
 				},
 			},
 		},
