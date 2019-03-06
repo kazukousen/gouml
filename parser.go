@@ -120,33 +120,36 @@ func (p *Parser) storeFuncDecl(astFile *ast.File) {
 }
 
 func (p Parser) print() []string {
-	lines := []string{}
+	stmts := []string{}
 	es := map[string]struct{}{}
+
+	// print classes
 	for pkg, types := range p.typeDefinitions {
 		for typeName, typeSpec := range types {
-			token, e := p.parseType(Vertex{Pkg: pkg, Name: typeName}, typeSpec.Type)
-			lines = append(lines, token)
+			stmt, e := p.printClass(Vertex{Pkg: pkg, Name: typeName}, typeSpec.Type)
+			stmts = append(stmts, stmt)
 			es[e] = struct{}{}
 		}
 	}
 
+	// print methods
 	for pkg, types := range p.funcDefinitions {
 		for typeName, funcDecls := range types {
 			for _, funcDecl := range funcDecls {
-				fn, e := p.parseFuncType(Vertex{Pkg: pkg, Name: typeName}, funcDecl)
-				lines = append(lines, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), fn))
+				stmt, e := p.printMethod(Vertex{Pkg: pkg, Name: typeName}, funcDecl)
+				stmts = append(stmts, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), stmt))
 				es[e] = struct{}{}
 			}
 		}
 	}
 	for e := range es {
-		lines = append(lines, e)
+		stmts = append(stmts, e)
 	}
 
-	return lines
+	return stmts
 }
 
-func (p *Parser) parseType(from Vertex, expr ast.Expr) (string, string) {
+func (p *Parser) printClass(from Vertex, expr ast.Expr) (string, string) {
 	tokenFieldNames := NewTokenFieldNames()
 	edges := Edges{}
 	switch expr := expr.(type) {
@@ -168,11 +171,14 @@ func (p *Parser) parseType(from Vertex, expr ast.Expr) (string, string) {
 		}
 	// type Foo Baz
 	case *ast.Ident:
+	// type Foo []Baz
+	case *ast.ArrayType:
+		p.parsefieldTypeName(expr.Elt)
 	}
 	return NewToken(from.Pkg, from.Name, objKindValueObject, tokenFieldNames).String(), edges.String()
 }
 
-func (p Parser) parseFuncType(from Vertex, funcDecl *ast.FuncDecl) (string, string) {
+func (p Parser) printMethod(from Vertex, funcDecl *ast.FuncDecl) (string, string) {
 	funcName := funcDecl.Name.Name
 	ft := FuncToken{Name: funcName}
 	edges := FuncEdges{}
