@@ -14,6 +14,7 @@ import (
 type Parser struct {
 	files           map[string]*ast.File
 	typeDefinitions map[string]map[string]*ast.TypeSpec
+	variableNodes   map[string]map[string][]*ast.ValueSpec
 	funcDefinitions map[string]map[string][]*ast.FuncDecl
 }
 
@@ -22,6 +23,7 @@ func NewParser() *Parser {
 	return &Parser{
 		files:           map[string]*ast.File{},
 		typeDefinitions: map[string]map[string]*ast.TypeSpec{},
+		variableNodes:   map[string]map[string][]*ast.ValueSpec{},
 		funcDefinitions: map[string]map[string][]*ast.FuncDecl{},
 	}
 }
@@ -73,21 +75,30 @@ func (p Parser) skip(f os.FileInfo) error {
 // storeNodes stores nodes of type declaretion and func declaretion
 func (p Parser) storeNodes() {
 	for _, ast := range p.files {
-		p.storeTypeSpec(ast)
+		p.storeGenDecl(ast)
 		p.storeFuncDecl(ast)
 	}
 }
 
-func (p *Parser) storeTypeSpec(astFile *ast.File) {
+func (p *Parser) storeGenDecl(astFile *ast.File) {
 	pkg := astFile.Name.Name
 	for _, decl := range astFile.Decls {
-		if genDecl, ok := decl.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
+		if genDecl, ok := decl.(*ast.GenDecl); ok {
 			for _, spec := range genDecl.Specs {
-				if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+				switch spec := spec.(type) {
+				case *ast.TypeSpec:
 					if _, ok := p.typeDefinitions[pkg]; !ok {
 						p.typeDefinitions[pkg] = map[string]*ast.TypeSpec{}
 					}
-					p.typeDefinitions[pkg][typeSpec.Name.Name] = typeSpec
+					p.typeDefinitions[pkg][spec.Name.Name] = spec
+				case *ast.ValueSpec:
+					if _, ok := p.variableNodes[pkg]; !ok {
+						p.variableNodes[pkg] = map[string][]*ast.ValueSpec{}
+					}
+					if doc := genDecl.Doc; doc != nil {
+						text := doc.Text()
+						p.variableNodes[pkg][text] = append(p.variableNodes[pkg][text], spec)
+					}
 				}
 			}
 		}

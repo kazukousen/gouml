@@ -23,7 +23,7 @@ func (g Generator) printClass(p *Parser, from Vertex, expr ast.Expr) (string, st
 	case *ast.StructType:
 		for _, field := range expr.Fields.List {
 			for _, name := range field.Names {
-				ftn := g.parsefieldTypeName(field.Type)
+				ftn := parsefieldTypeName(field.Type)
 				fields.Add(name.Name, ftn.String())
 				pkg, typ, isArray := ftn.kv()
 				if len(pkg) == 0 {
@@ -39,7 +39,7 @@ func (g Generator) printClass(p *Parser, from Vertex, expr ast.Expr) (string, st
 	case *ast.Ident:
 	// type Foo []Baz
 	case *ast.ArrayType:
-		ftn := g.parsefieldTypeName(expr.Elt)
+		ftn := parsefieldTypeName(expr.Elt)
 		pkg, typ, _ := ftn.kv()
 		if len(pkg) == 0 {
 			pkg = from.Pkg
@@ -61,7 +61,7 @@ func (g Generator) printMethod(p *Parser, from Vertex, funcDecl *ast.FuncDecl) (
 	if funcDecl.Type.Params != nil {
 		for _, param := range funcDecl.Type.Params.List {
 			for _, name := range param.Names {
-				ftn := g.parsefieldTypeName(param.Type)
+				ftn := parsefieldTypeName(param.Type)
 				ft.Params = append(ft.Params, NameTypeKV{Name: name.Name, Type: ftn.String()})
 				pkg, typ, isArray := ftn.kv()
 				if len(pkg) == 0 {
@@ -82,7 +82,7 @@ func (g Generator) printMethod(p *Parser, from Vertex, funcDecl *ast.FuncDecl) (
 			for _, n := range result.Names {
 				name = n.Name
 			}
-			ftn := g.parsefieldTypeName(result.Type)
+			ftn := parsefieldTypeName(result.Type)
 			ft.Results = append(ft.Results, NameTypeKV{Name: name, Type: ftn.String()})
 			pkg, typ, isArray := ftn.kv()
 			if len(pkg) == 0 {
@@ -98,12 +98,38 @@ func (g Generator) printMethod(p *Parser, from Vertex, funcDecl *ast.FuncDecl) (
 	return ft.String(), edges.String()
 }
 
-func (g Generator) parsefieldTypeName(expr ast.Expr) fieldTypeName {
+func (g Generator) printNote(p *Parser, pkgName, text string, from Vertex, specs []*ast.ValueSpec) (string, string) {
+	names := []string{}
+	edges := map[Edge]struct{}{}
+	for _, spec := range specs {
+		pkg, typ, _ := parsefieldTypeName(spec.Type).kv()
+		if len(pkg) == 0 {
+			pkg = pkgName
+		}
+		edges[Edge{From: from, To: Vertex{Pkg: pkg, Name: typ}}] = struct{}{}
+		for _, name := range spec.Names {
+			names = append(names, name.Name)
+		}
+	}
+
+	dst := make(Edges, 0, len(edges))
+	for e := range edges {
+		dst = append(dst, e)
+	}
+	return fmt.Sprintf(`
+note as %s
+	<b>%s</b>
+	%s
+end note
+	`, from.hash(), strings.Trim(text, "\n"), strings.Join(names, "\n\t")), dst.String()
+}
+
+func parsefieldTypeName(expr ast.Expr) fieldTypeName {
 	switch expr := expr.(type) {
 	case *ast.Ident:
 		return fieldTypeName(expr.Name)
 	case *ast.ArrayType:
-		return "[]" + g.parsefieldTypeName(expr.Elt)
+		return "[]" + parsefieldTypeName(expr.Elt)
 	}
 	typeName := fmt.Sprintf("%v", expr)
 	typeName = strings.Trim(typeName, "&{}")
