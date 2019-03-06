@@ -21,4 +21,5 @@ type PriceModel string
 // enums of pricing model
 const (
 	PriceModelCPM PriceModel = "cpm"
+	PriceModelCPV PriceModel = "cpv"
 )

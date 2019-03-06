@@ -48,14 +48,26 @@ func (r Runner) print(p *Parser, g *Generator, fileName string) error {
 
 	// print methods
 	for pkg, types := range p.funcDefinitions {
-		for typeName, funcDecls := range types {
+		for fn, funcDecls := range types {
+			from := Vertex{Pkg: pkg, Name: fn}
 			for _, funcDecl := range funcDecls {
-				stmt, e := g.printMethod(p, Vertex{Pkg: pkg, Name: typeName}, funcDecl)
-				stmts = append(stmts, fmt.Sprintf("%s : %s\n", NewHash(pkg, typeName), stmt))
+				stmt, e := g.printMethod(p, from, funcDecl)
+				stmts = append(stmts, fmt.Sprintf("%s : %s\n", from.hash(), stmt))
 				es[e] = struct{}{}
 			}
 		}
 	}
+
+	// print notes
+	for pkg, nodes := range p.variableNodes {
+		for text, specs := range nodes {
+			from := Vertex{Pkg: pkg, Name: text}
+			stmt, e := g.printNote(p, pkg, text, from, specs)
+			stmts = append(stmts, stmt)
+			es[e] = struct{}{}
+		}
+	}
+
 	for e := range es {
 		stmts = append(stmts, e)
 	}
