@@ -16,16 +16,16 @@ func NewGenerator() *Generator {
 }
 
 func (g Generator) printClass(p *Parser, from Vertex, expr ast.Expr) (string, string) {
-	tokenFieldNames := NewTokenFieldNames()
+	fields := NewTokenFieldNames()
 	edges := Edges{}
 	switch expr := expr.(type) {
 	// type Foo struct{...}
 	case *ast.StructType:
 		for _, field := range expr.Fields.List {
 			for _, name := range field.Names {
-				fieldTypeName := g.parsefieldTypeName(field.Type)
-				tokenFieldNames.Add(name.Name, fieldTypeName.String())
-				pkg, typ, isArray := fieldTypeName.kv()
+				ftn := g.parsefieldTypeName(field.Type)
+				fields.Add(name.Name, ftn.String())
+				pkg, typ, isArray := ftn.kv()
 				if len(pkg) == 0 {
 					pkg = from.Pkg
 				}
@@ -39,9 +39,17 @@ func (g Generator) printClass(p *Parser, from Vertex, expr ast.Expr) (string, st
 	case *ast.Ident:
 	// type Foo []Baz
 	case *ast.ArrayType:
-		g.parsefieldTypeName(expr.Elt)
+		ftn := g.parsefieldTypeName(expr.Elt)
+		pkg, typ, _ := ftn.kv()
+		if len(pkg) == 0 {
+			pkg = from.Pkg
+		}
+		if _, ok := p.typeDefinitions[pkg][typ]; ok {
+			to := Vertex{Pkg: pkg, Name: typ}
+			edges = append(edges, Edge{From: from, To: to, IsArray: true})
+		}
 	}
-	return NewToken(from.Pkg, from.Name, objKindValueObject, tokenFieldNames).String(), edges.String()
+	return NewToken(from.Pkg, from.Name, objKindValueObject, fields).String(), edges.String()
 }
 
 func (g Generator) printMethod(p *Parser, from Vertex, funcDecl *ast.FuncDecl) (string, string) {

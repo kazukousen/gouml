@@ -6,6 +6,19 @@ import (
 	"github.com/kazukousen/gouml/example/model/adexchange"
 )
 
+// BeaconEvents object
+type BeaconEvents []BeaconEvent
+
+func (r BeaconEvents) extractWithInRange(dateRange DateRange) BeaconEvents {
+	dst := make(BeaconEvents, 0, len(r))
+	for _, event := range r {
+		if event.FiredBetween(dateRange) {
+			dst = append(dst, event)
+		}
+	}
+	return dst
+}
+
 // BeaconEvent object
 type BeaconEvent struct {
 	Code      BeaconEventCode
