@@ -21,7 +21,7 @@ func main() {
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
 				baseDir := c.String("dir")
-				return gouml.NewParser().Parse(baseDir)
+				return gouml.NewRunner().Run(baseDir)
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
