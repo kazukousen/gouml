@@ -17,7 +17,7 @@ func NewRunner() *Runner {
 }
 
 // Run ...
-func (r Runner) Run(baseDir string) error {
+func (r Runner) Run(baseDir string, out string) error {
 
 	p := NewParser()
 	if err := p.Parse(baseDir); err != nil {
@@ -26,7 +26,7 @@ func (r Runner) Run(baseDir string) error {
 
 	g := NewGenerator()
 
-	if err := r.print(p, g, path.Join(baseDir, "class.uml")); err != nil {
+	if err := r.print(p, g, path.Join(baseDir, out+".uml")); err != nil {
 		return err
 	}
 
