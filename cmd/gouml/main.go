@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/kazukousen/gouml"
+	"github.com/kazukousen/gouml/internal/gouml"
 
 	"github.com/urfave/cli"
 )
@@ -21,7 +21,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 				baseDir := c.String("dir")
 				out := c.String("out")
-				return gouml.NewRunner().Run(baseDir, out)
+				return gouml.Gen(baseDir, out)
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
