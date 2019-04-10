@@ -2,44 +2,110 @@ package gouml
 
 import (
 	"bytes"
+	"fmt"
 	"go/types"
 )
 
-func newModel(obj *types.TypeName) *model {
-	m := &model{obj: obj}
-	m.init()
-	return m
+type models []model
+
+func (ms *models) append(obj *types.TypeName) {
+	m := model{obj: obj}
+	m.build()
+	*ms = append(*ms, m)
+}
+
+func (ms models) writeClass(buf *bytes.Buffer, exists map[id]struct{}) {
+	for _, m := range ms {
+		newline(buf, 0)
+		m.writeClass(buf)
+	}
+}
+
+func (ms models) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}) {
+	for _, m := range ms {
+		newline(buf, 0)
+		m.writeDiagram(buf, exists)
+	}
+}
+
+func (ms models) writeImplements(buf *bytes.Buffer, depth int) {
+	for _, t := range ms {
+		T := t.obj.Type()
+		for _, u := range ms {
+			U := u.obj.Type()
+			if T == U || !types.IsInterface(U) {
+				continue
+			}
+			if types.AssignableTo(T, U) {
+				newline(buf, depth)
+				buf.WriteString(t.as())
+				buf.WriteString(" --|> ")
+				buf.WriteString(u.as())
+			}
+		}
+	}
 }
 
 type model struct {
 	obj *types.TypeName
 	id
+	kind    modelKind
 	field   field
 	methods methods
+	wrap    *types.Named
 }
 
-func (m *model) init() {
+func (m *model) build() {
 	obj := m.obj
+	// *types.TypeName represents ```type [typ] [underlying]```
+
 	// get type
 	typ := obj.Type()
 	m.full = typ.String()
-	if obj.IsAlias() {
-		// TODO: test
-		typ = obj.Type().Underlying()
-	}
+	// TODO: obj.IsAlias() is true
 
 	// named type (means user-defined class in OOP)
 	if named, _ := typ.(*types.Named); named != nil {
 
 		// implemented methods
 		for i := 0; i < named.NumMethods(); i++ {
-			m.methods = append(m.methods, method{f: named.Method(i)})
+			f := named.Method(i)
+
+			m.methods = append(m.methods, method{f: f})
+			if sig, ok := f.Type().(*types.Signature); ok {
+				if _, ok := sig.Recv().Type().(*types.Pointer); ok {
+					m.kind = modelKindEntity
+				}
+			}
 		}
 	}
 
-	// struct fields
-	if st, _ := typ.Underlying().(*types.Struct); st != nil {
-		m.field = field{st: st}
+	// underlying
+	switch un := typ.Underlying().(type) {
+	// struct
+	case *types.Struct:
+		m.field = field{st: un}
+
+	// interface
+	case *types.Interface:
+		m.kind = modelKindInterface
+		for i := 0; i < un.NumMethods(); i++ {
+			m.methods = append(m.methods, method{f: un.Method(i)})
+		}
+
+	// wrap
+	case *types.Slice:
+		if named, _ := un.Elem().(*types.Named); named != nil {
+			m.wrap = named
+		}
+	case *types.Map:
+		if named, _ := un.Elem().(*types.Named); named != nil {
+			m.wrap = named
+		}
+	}
+
+	if m.kind == "" {
+		m.kind = modelKindValueObject
 	}
 }
 
@@ -47,18 +113,7 @@ func (m model) as() string {
 	return m.id.getID()
 }
 
-func (m model) writeRelated(buf *bytes.Buffer, exists map[id]struct{}) {
-	id := m.as()
-	// relation
-	newline(buf, 0)
-	m.field.relateTo(buf, exists, id, 1)
-	newline(buf, 0)
-	m.methods.relateTo(buf, exists, id, 1)
-}
-
-func (m model) String() string {
-	buf := &bytes.Buffer{}
-
+func (m model) writeClass(buf *bytes.Buffer) {
 	id := m.as()
 
 	// package
@@ -67,10 +122,7 @@ func (m model) String() string {
 	buf.WriteString(`" {`)
 	// class
 	newline(buf, 1)
-	buf.WriteString(`class "`)
-	buf.WriteString(m.name())
-	buf.WriteString(`" as `)
-	buf.WriteString(id)
+	buf.WriteString(m.kind.Printf(m.name(), id))
 	if m.field.size() > 0 || len(m.methods) > 0 {
 		buf.WriteString(` {`)
 		// fields
@@ -82,8 +134,25 @@ func (m model) String() string {
 	}
 	newline(buf, 0)
 	buf.WriteString("}")
+}
 
-	return buf.String()
+func (m model) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}) {
+	from := m.as()
+	newline(buf, 0)
+	m.field.writeDiagram(buf, exists, from, 1)
+
+	newline(buf, 0)
+	m.methods.writeDiagram(buf, exists, from, 1)
+
+	newline(buf, 0)
+	{
+		if wrap := m.wrap; wrap != nil {
+			to := id{full: wrap.String()}.getID()
+			buf.WriteString(from)
+			buf.WriteString(" *-- ")
+			buf.WriteString(to)
+		}
+	}
 }
 
 type field struct {
@@ -110,7 +179,7 @@ func (f field) WriteTo(buf *bytes.Buffer, depth int) {
 	}
 }
 
-func (f field) relateTo(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
+func (f field) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
 	if f.st == nil {
 		return
 	}
@@ -137,9 +206,9 @@ func (ms methods) WriteTo(buf *bytes.Buffer, depth int) {
 	}
 }
 
-func (ms methods) relateTo(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
+func (ms methods) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
 	for _, m := range ms {
-		m.relateTo(buf, exists, from, depth)
+		m.writeDiagram(buf, exists, from, depth)
 	}
 }
 
@@ -175,8 +244,8 @@ func (m method) WriteTo(buf *bytes.Buffer) {
 
 	// results
 	res := sig.Results()
-	buf.WriteString(": ")
 	if res.Len() > 1 {
+		buf.WriteString(": ")
 		buf.WriteString("(")
 	}
 	for i := 0; i < res.Len(); i++ {
@@ -196,7 +265,7 @@ func (m method) WriteTo(buf *bytes.Buffer) {
 	}
 }
 
-func (m method) relateTo(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
+func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
 	if m.f == nil {
 		return
 	}
@@ -234,4 +303,16 @@ func (m method) relateTo(buf *bytes.Buffer, exists map[id]struct{}, from string,
 		buf.WriteString(to)
 		buf.WriteString(" : <<return>> ")
 	}
+}
+
+type modelKind string
+
+const (
+	modelKindInterface   modelKind = `interface "%s" as %s`
+	modelKindValueObject modelKind = `class "%s" as %s <<V,Orchid>>`
+	modelKindEntity      modelKind = `class "%s" as %s <<E,Orchid>>`
+)
+
+func (k modelKind) Printf(name, alias string) string {
+	return fmt.Sprintf(string(k), name, alias)
 }

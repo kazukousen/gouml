@@ -14,11 +14,6 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type tuple struct {
-	pkg   string
-	model string
-}
-
 // Gen ...
 func Gen(baseDir string) error {
 	pkgs, err := read(baseDir)
@@ -38,17 +33,14 @@ func Gen(baseDir string) error {
 			}
 		}
 	}
-	models := []model{}
+	models := models{}
 	cons := constantsMap{}
 	for _, obj := range objects {
 		switch obj := obj.(type) {
 
 		// declared type
 		case *types.TypeName:
-			m := newModel(obj)
-
-			fmt.Printf("%s\n", m)
-			models = append(models, *m)
+			models.append(obj)
 
 		// declared constant
 		case *types.Const:
@@ -57,14 +49,13 @@ func Gen(baseDir string) error {
 				cons[id] = append(cons[id], obj)
 			}
 		}
-		fmt.Printf("\n")
 	}
 
 	buf := &bytes.Buffer{}
-	for _, m := range models {
-		newline(buf, 0)
-		m.writeRelated(buf, exists)
-	}
+
+	models.writeClass(buf, exists)
+	models.writeDiagram(buf, exists)
+	models.writeImplements(buf, 1)
 	fmt.Printf("%s\n", buf)
 
 	fmt.Printf("%s\n", cons)
