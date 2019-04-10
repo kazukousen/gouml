@@ -58,7 +58,7 @@ package "gouml" {
 
 gouml.methods *-- gouml.method
 package "gouml" {
-	class "model" as gouml.model <<E,Orchid>> {
+	class "model" as gouml.model <<E,#FFCC00>> {
 		obj: *go/types.TypeName
 		id: gouml.id
 		kind: gouml.modelKind
@@ -87,7 +87,7 @@ package "gouml" {
 
 
 package "gouml" {
-	class "models" as gouml.models <<E,Orchid>> {
+	class "models" as gouml.models <<E,#FFCC00>> {
 		append(obj: *go/types.TypeName)
 		WriteTo(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
 		writeImplements(buf: *bytes.Buffer, depth: int)

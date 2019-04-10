@@ -307,7 +307,7 @@ type modelKind string
 const (
 	modelKindInterface   modelKind = `interface "%s" as %s`
 	modelKindValueObject modelKind = `class "%s" as %s <<V,Orchid>>`
-	modelKindEntity      modelKind = `class "%s" as %s <<E,Orchid>>`
+	modelKindEntity      modelKind = `class "%s" as %s <<E,#FFCC00>>`
 )
 
 func (k modelKind) Printf(name, alias string) string {
