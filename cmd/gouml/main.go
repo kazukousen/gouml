@@ -20,8 +20,8 @@ func main() {
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
 				baseDir := c.String("dir")
-				// out := c.String("out")
-				return gouml.Gen(baseDir)
+				out := c.String("out")
+				return gouml.Gen(baseDir, out)
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{

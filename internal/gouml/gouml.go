@@ -9,13 +9,14 @@ import (
 	"go/token"
 	"go/types"
 	"os"
+	"path"
 	"path/filepath"
 
 	"golang.org/x/xerrors"
 )
 
 // Gen ...
-func Gen(baseDir string) error {
+func Gen(baseDir, out string) error {
 	pkgs, err := read(baseDir)
 	if err != nil {
 		return err
@@ -52,13 +53,21 @@ func Gen(baseDir string) error {
 	}
 
 	buf := &bytes.Buffer{}
+	models.WriteTo(buf, exists)
 
-	models.writeClass(buf, exists)
-	models.writeDiagram(buf, exists)
-	models.writeImplements(buf, 1)
-	fmt.Printf("%s\n", buf)
+	cons.WriteTo(buf)
 
-	fmt.Printf("%s\n", cons)
+	newline(buf, 0)
+
+	// fmt.Printf(buf.String())
+	filename := path.Join(baseDir, out+".uml")
+	uml, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer uml.Close()
+	fmt.Fprintf(uml, buf.String())
+
 	return nil
 }
 

@@ -14,18 +14,12 @@ func (ms *models) append(obj *types.TypeName) {
 	*ms = append(*ms, m)
 }
 
-func (ms models) writeClass(buf *bytes.Buffer, exists map[id]struct{}) {
+func (ms models) WriteTo(buf *bytes.Buffer, exists map[id]struct{}) {
 	for _, m := range ms {
-		newline(buf, 0)
 		m.writeClass(buf)
-	}
-}
-
-func (ms models) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}) {
-	for _, m := range ms {
-		newline(buf, 0)
 		m.writeDiagram(buf, exists)
 	}
+	ms.writeImplements(buf, 1)
 }
 
 func (ms models) writeImplements(buf *bytes.Buffer, depth int) {
@@ -116,6 +110,7 @@ func (m model) as() string {
 func (m model) writeClass(buf *bytes.Buffer) {
 	id := m.as()
 
+	newline(buf, 0)
 	// package
 	buf.WriteString(`package "`)
 	buf.WriteString(m.pkg())

@@ -1,0 +1,107 @@
+
+package "gouml" {
+	class "constants" as gouml.constants <<V,Orchid>> {
+		WriteTo(buf: *bytes.Buffer, depth: int)
+	}
+}
+
+
+
+package "gouml" {
+	class "constantsMap" as gouml.constantsMap <<V,Orchid>> {
+		WriteTo(buf: *bytes.Buffer)
+	}
+}
+
+
+gouml.constantsMap *-- gouml.constants
+package "gouml" {
+	class "field" as gouml.field <<V,Orchid>> {
+		st: *go/types.Struct
+		size()int
+		WriteTo(buf: *bytes.Buffer, depth: int)
+		writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
+	}
+}
+
+
+
+package "gouml" {
+	class "id" as gouml.id <<V,Orchid>> {
+		full: string
+		getID()string
+		pkg()string
+		name()string
+		split(): (string, string)
+	}
+}
+
+
+
+package "gouml" {
+	class "method" as gouml.method <<V,Orchid>> {
+		f: *go/types.Func
+		WriteTo(buf: *bytes.Buffer)
+		writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
+	}
+}
+
+
+
+package "gouml" {
+	class "methods" as gouml.methods <<V,Orchid>> {
+		WriteTo(buf: *bytes.Buffer, depth: int)
+		writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
+	}
+}
+
+
+gouml.methods *-- gouml.method
+package "gouml" {
+	class "model" as gouml.model <<E,Orchid>> {
+		obj: *go/types.TypeName
+		id: gouml.id
+		kind: gouml.modelKind
+		field: gouml.field
+		methods: gouml.methods
+		wrap: *go/types.Named
+		build()
+		as()string
+		writeClass(buf: *bytes.Buffer)
+		writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
+	}
+}
+
+	gouml.model --> gouml.id
+	gouml.model --> gouml.modelKind
+	gouml.model --> gouml.field
+	gouml.model --> gouml.methods
+
+
+package "gouml" {
+	class "modelKind" as gouml.modelKind <<V,Orchid>> {
+		Printf(name: string, alias: string)string
+	}
+}
+
+
+
+package "gouml" {
+	class "models" as gouml.models <<E,Orchid>> {
+		append(obj: *go/types.TypeName)
+		WriteTo(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
+		writeImplements(buf: *bytes.Buffer, depth: int)
+	}
+}
+
+
+gouml.models *-- gouml.model
+
+note as N_gouml_modelKind
+	<b>modelKind</b>
+
+	modelKindEntity
+	modelKindInterface
+	modelKindValueObject
+end note
+N_gouml_modelKind --> gouml.modelKind

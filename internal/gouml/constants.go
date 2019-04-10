@@ -10,8 +10,8 @@ type constantsMap map[id]constants
 
 type constants []*types.Const
 
-func (m constantsMap) String() string {
-	buf := new(bytes.Buffer)
+func (m constantsMap) WriteTo(buf *bytes.Buffer) {
+	newline(buf, 0)
 	for id, cs := range m {
 		// generate id
 		to := id.getID()
@@ -41,7 +41,6 @@ func (m constantsMap) String() string {
 		buf.WriteString(" --> ")
 		buf.WriteString(to)
 	}
-	return buf.String()
 }
 
 func (cs constants) WriteTo(buf *bytes.Buffer, depth int) {
