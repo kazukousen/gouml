@@ -68,7 +68,9 @@ func (m *model) build() {
 			m.methods = append(m.methods, method{f: f})
 			if sig, ok := f.Type().(*types.Signature); ok {
 				if _, ok := sig.Recv().Type().(*types.Pointer); ok {
-					m.kind = modelKindEntity
+					if sig.Results().Len() == 0 {
+						m.kind = modelKindEntity
+					}
 				}
 			}
 		}
