@@ -184,6 +184,12 @@ func (f field) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from stri
 		if ptr, ok := typ.(*types.Pointer); ok {
 			typ = ptr.Elem()
 		}
+		if m, ok := typ.(*types.Map); ok {
+			typ = m.Elem()
+		}
+		if sl, ok := typ.(*types.Slice); ok {
+			typ = sl.Elem()
+		}
 		id := id{full: typ.String()}
 		to := id.getID()
 		if _, ok := exists[id]; !ok {
@@ -285,6 +291,12 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 		if ptr, ok := typ.(*types.Pointer); ok {
 			typ = ptr.Elem()
 		}
+		if m, ok := typ.(*types.Map); ok {
+			typ = m.Elem()
+		}
+		if sl, ok := typ.(*types.Slice); ok {
+			typ = sl.Elem()
+		}
 		id := id{full: typ.String()}
 		to := id.getID()
 		if _, ok := exists[id]; !ok {
@@ -303,6 +315,12 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 		typ := res.At(i).Type()
 		if ptr, ok := typ.(*types.Pointer); ok {
 			typ = ptr.Elem()
+		}
+		if m, ok := typ.(*types.Map); ok {
+			typ = m.Elem()
+		}
+		if sl, ok := typ.(*types.Slice); ok {
+			typ = sl.Elem()
 		}
 		id := id{full: typ.String()}
 		to := id.getID()
