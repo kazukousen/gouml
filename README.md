@@ -13,4 +13,10 @@ $ gouml init -d example/model/
 
 ## Example
 
-![sample image](/sample.png)
+from `example/model/` directory.  
+
+![sample image](/example.png)
+
+and self-reference :tada:  
+
+![self-ref image](self-ref.png)
