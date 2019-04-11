@@ -180,6 +180,9 @@ func (f field) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from stri
 	}
 	for i := 0; i < f.st.NumFields(); i++ {
 		typ := f.st.Field(i).Type()
+		if ptr, ok := typ.(*types.Pointer); ok {
+			typ = ptr.Elem()
+		}
 		id := id{full: typ.String()}
 		to := id.getID()
 		if _, ok := exists[id]; !ok {
