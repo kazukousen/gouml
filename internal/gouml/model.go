@@ -142,13 +142,11 @@ func (m model) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}) {
 	m.methods.writeDiagram(buf, exists, from, 1)
 
 	newline(buf, 0)
-	{
-		if wrap := m.wrap; wrap != nil {
-			to := id{full: wrap.String()}.getID()
-			buf.WriteString(from)
-			buf.WriteString(" *-- ")
-			buf.WriteString(to)
-		}
+	if wrap := m.wrap; wrap != nil {
+		to := id{full: wrap.String()}.getID()
+		buf.WriteString(from)
+		buf.WriteString(" *-- ")
+		buf.WriteString(to)
 	}
 }
 
@@ -273,6 +271,9 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 	param := sig.Params()
 	for i := 0; i < param.Len(); i++ {
 		typ := param.At(i).Type()
+		if ptr, ok := typ.(*types.Pointer); ok {
+			typ = ptr.Elem()
+		}
 		id := id{full: typ.String()}
 		to := id.getID()
 		if _, ok := exists[id]; !ok {
@@ -289,6 +290,9 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 	res := sig.Results()
 	for i := 0; i < res.Len(); i++ {
 		typ := res.At(i).Type()
+		if ptr, ok := typ.(*types.Pointer); ok {
+			typ = ptr.Elem()
+		}
 		id := id{full: typ.String()}
 		to := id.getID()
 		if _, ok := exists[id]; !ok {
