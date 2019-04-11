@@ -168,6 +168,7 @@ func (f field) WriteTo(buf *bytes.Buffer, depth int) {
 	for i := 0; i < f.st.NumFields(); i++ {
 		newline(buf, depth)
 		v := f.st.Field(i)
+		buf.WriteString(exportedIcon(v.Exported()))
 		buf.WriteString(v.Name())
 		buf.WriteString(": ")
 		buf.WriteString(v.Type().String())
@@ -199,8 +200,7 @@ type methods []method
 
 func (ms methods) WriteTo(buf *bytes.Buffer, depth int) {
 	for _, m := range ms {
-		newline(buf, depth)
-		m.WriteTo(buf)
+		m.WriteTo(buf, depth)
 	}
 }
 
@@ -214,11 +214,13 @@ type method struct {
 	f *types.Func
 }
 
-func (m method) WriteTo(buf *bytes.Buffer) {
+func (m method) WriteTo(buf *bytes.Buffer, depth int) {
 	if m.f == nil {
 		return
 	}
 
+	newline(buf, depth)
+	buf.WriteString(exportedIcon(m.f.Exported()))
 	// Name
 	buf.WriteString(m.f.Name())
 
@@ -325,4 +327,11 @@ const (
 
 func (k modelKind) Printf(name, alias string) string {
 	return fmt.Sprintf(string(k), name, alias)
+}
+
+func exportedIcon(exported bool) string {
+	if exported {
+		return "+"
+	}
+	return "-"
 }
