@@ -264,6 +264,12 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 	if m.f == nil {
 		return
 	}
+
+	if !m.f.Exported() {
+		// a non-exported method do not draw a diagram.
+		return
+	}
+
 	// Signature
 	sig, _ := m.f.Type().(*types.Signature)
 
