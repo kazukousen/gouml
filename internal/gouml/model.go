@@ -2,7 +2,6 @@ package gouml
 
 import (
 	"bytes"
-	"fmt"
 	"go/types"
 )
 
@@ -64,15 +63,10 @@ func (m *model) build() {
 		// implemented methods
 		for i := 0; i < named.NumMethods(); i++ {
 			f := named.Method(i)
-
-			m.methods = append(m.methods, method{f: f})
-			if sig, ok := f.Type().(*types.Signature); ok {
-				if _, ok := sig.Recv().Type().(*types.Pointer); ok {
-					if sig.Results().Len() == 0 {
-						m.kind = modelKindEntity
-					}
-				}
+			if isEntity(f) {
+				m.kind = modelKindEntity
 			}
+			m.methods = append(m.methods, method{f: f})
 		}
 	}
 
@@ -333,18 +327,6 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 		buf.WriteString(to)
 		buf.WriteString(" : <<return>> ")
 	}
-}
-
-type modelKind string
-
-const (
-	modelKindInterface   modelKind = `interface "%s" as %s`
-	modelKindValueObject modelKind = `class "%s" as %s <<V,Orchid>>`
-	modelKindEntity      modelKind = `class "%s" as %s <<E,#FFCC00>>`
-)
-
-func (k modelKind) Printf(name, alias string) string {
-	return fmt.Sprintf(string(k), name, alias)
 }
 
 func exportedIcon(exported bool) string {
