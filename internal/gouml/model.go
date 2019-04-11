@@ -29,7 +29,7 @@ func (ms models) writeImplements(buf *bytes.Buffer, depth int) {
 			if T == U || !types.IsInterface(U) {
 				continue
 			}
-			if types.AssignableTo(T, U) {
+			if types.AssignableTo(T, U) || (!types.IsInterface(T) && types.AssignableTo(types.NewPointer(T), U)) {
 				newline(buf, depth)
 				buf.WriteString(t.as())
 				buf.WriteString(" --|> ")
