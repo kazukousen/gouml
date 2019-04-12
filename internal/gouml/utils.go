@@ -19,6 +19,7 @@ func extractName(full string) string {
 	}
 	return full
 }
+
 func extractPkgName(name string) string {
 	if strings.Contains(name, ".") {
 		parts := strings.Split(name, ".")

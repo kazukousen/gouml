@@ -65,7 +65,7 @@ func (m *model) build() {
 		// implemented methods
 		for i := 0; i < named.NumMethods(); i++ {
 			f := named.Method(i)
-			if isEntity(f) {
+			if isCommand(f) {
 				m.kind = modelKindEntity
 			}
 			m.methods = append(m.methods, method{f: f})

@@ -17,11 +17,9 @@ func (k modelKind) Printf(name, alias string) string {
 	return fmt.Sprintf(string(k), name, alias)
 }
 
-func isEntity(f *types.Func) bool {
-	sig, ok := f.Type().(*types.Signature)
-	if !ok {
-		return false
-	}
+func isCommand(f *types.Func) bool {
+	// *types.Func.Type() is always a *types.Signature
+	sig := f.Type().(*types.Signature)
 	if _, ok := sig.Recv().Type().(*types.Pointer); !ok {
 		return false
 	}
