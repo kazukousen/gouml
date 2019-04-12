@@ -246,8 +246,10 @@ func (m method) WriteTo(buf *bytes.Buffer, depth int) {
 
 	// results
 	res := sig.Results()
-	if res.Len() > 1 {
+	if res.Len() > 0 {
 		buf.WriteString(": ")
+	}
+	if res.Len() > 1 {
 		buf.WriteString("(")
 	}
 	for i := 0; i < res.Len(); i++ {
