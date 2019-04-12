@@ -25,5 +25,15 @@ func isEntity(f *types.Func) bool {
 	if _, ok := sig.Recv().Type().(*types.Pointer); !ok {
 		return false
 	}
-	return sig.Results().Len() == 0
+	if sig.Results().Len() == 0 {
+		return true
+	}
+	if sig.Results().Len() == 1 {
+		t := sig.Results().At(0).Type()
+		errType := types.Universe.Lookup("error").Type()
+		if types.Implements(t, errType.Underlying().(*types.Interface)) {
+			return true
+		}
+	}
+	return false
 }
