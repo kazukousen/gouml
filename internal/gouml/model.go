@@ -5,15 +5,17 @@ import (
 	"go/types"
 )
 
-type models []model
+// Models ...
+type Models []model
 
-func (ms *models) append(obj *types.TypeName) {
+func (ms *Models) append(obj *types.TypeName) {
 	m := model{obj: obj}
 	m.build()
 	*ms = append(*ms, m)
 }
 
-func (ms models) WriteTo(buf *bytes.Buffer, exists map[id]struct{}) {
+// WriteTo ...
+func (ms Models) WriteTo(buf *bytes.Buffer, exists map[id]struct{}) {
 	for _, m := range ms {
 		m.writeClass(buf)
 		m.writeDiagram(buf, exists)
@@ -21,7 +23,7 @@ func (ms models) WriteTo(buf *bytes.Buffer, exists map[id]struct{}) {
 	ms.writeImplements(buf, 1)
 }
 
-func (ms models) writeImplements(buf *bytes.Buffer, depth int) {
+func (ms Models) writeImplements(buf *bytes.Buffer, depth int) {
 	for _, t := range ms {
 		T := t.obj.Type()
 		for _, u := range ms {

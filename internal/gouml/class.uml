@@ -1,6 +1,16 @@
 
 package "gouml" {
-	class "constants" as gouml.constants <<V,Orchid>> {
+	class "Models" as gouml.Models <<E,#FFCC00>> {
+		-append(obj: *go/types.TypeName)
+		+WriteTo(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
+		-writeImplements(buf: *bytes.Buffer, depth: int)
+	}
+}
+
+
+gouml.Models *-- gouml.model
+package "gouml" {
+	class "Note" as gouml.Note <<V,Orchid>> {
 		+WriteTo(buf: *bytes.Buffer, depth: int)
 	}
 }
@@ -8,13 +18,13 @@ package "gouml" {
 
 
 package "gouml" {
-	class "constantsMap" as gouml.constantsMap <<V,Orchid>> {
+	class "Notes" as gouml.Notes <<V,Orchid>> {
 		+WriteTo(buf: *bytes.Buffer)
 	}
 }
 
 
-gouml.constantsMap *-- gouml.constants
+gouml.Notes *-- gouml.Note
 package "gouml" {
 	class "field" as gouml.field <<V,Orchid>> {
 		-st: *go/types.Struct
@@ -86,16 +96,6 @@ package "gouml" {
 
 
 
-package "gouml" {
-	class "models" as gouml.models <<E,#FFCC00>> {
-		-append(obj: *go/types.TypeName)
-		+WriteTo(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
-		-writeImplements(buf: *bytes.Buffer, depth: int)
-	}
-}
-
-
-gouml.models *-- gouml.model
 
 note as N_gouml_modelKind
 	<b>modelKind</b>

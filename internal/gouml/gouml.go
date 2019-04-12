@@ -34,8 +34,8 @@ func Gen(baseDir, out string) error {
 			}
 		}
 	}
-	models := models{}
-	cons := constantsMap{}
+	models := Models{}
+	notes := Notes{}
 	for _, obj := range objects {
 		switch obj := obj.(type) {
 
@@ -47,16 +47,14 @@ func Gen(baseDir, out string) error {
 		case *types.Const:
 			if named, _ := obj.Type().(*types.Named); named != nil {
 				id := id{full: named.String()}
-				cons[id] = append(cons[id], obj)
+				notes[id] = append(notes[id], obj)
 			}
 		}
 	}
 
 	buf := &bytes.Buffer{}
 	models.WriteTo(buf, exists)
-
-	cons.WriteTo(buf)
-
+	notes.WriteTo(buf)
 	newline(buf, 0)
 
 	// fmt.Printf(buf.String())

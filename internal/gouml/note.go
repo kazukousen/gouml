@@ -6,13 +6,16 @@ import (
 	"strings"
 )
 
-type constantsMap map[id]constants
+// Notes ...
+type Notes map[id]Note
 
-type constants []*types.Const
+// Note ...
+type Note []*types.Const
 
-func (m constantsMap) WriteTo(buf *bytes.Buffer) {
+// WriteTo ...
+func (ns Notes) WriteTo(buf *bytes.Buffer) {
 	newline(buf, 0)
-	for id, cs := range m {
+	for id, n := range ns {
 		// generate id
 		to := id.getID()
 		from := "N_" + strings.Replace(to, ".", "_", -1)
@@ -29,7 +32,7 @@ func (m constantsMap) WriteTo(buf *bytes.Buffer) {
 			buf.WriteString("</b>\n")
 
 			// write elements
-			cs.WriteTo(buf, 1)
+			n.WriteTo(buf, 1)
 		}
 		// write footer
 		newline(buf, 0)
@@ -43,9 +46,10 @@ func (m constantsMap) WriteTo(buf *bytes.Buffer) {
 	}
 }
 
-func (cs constants) WriteTo(buf *bytes.Buffer, depth int) {
-	for _, c := range cs {
+// WriteTo ...
+func (n Note) WriteTo(buf *bytes.Buffer, depth int) {
+	for _, row := range n {
 		newline(buf, depth)
-		buf.WriteString(c.Name())
+		buf.WriteString(row.Name())
 	}
 }
