@@ -7,7 +7,7 @@ import (
 )
 
 // Notes ...
-type Notes map[id]Note
+type Notes map[string]Note
 
 // Note ...
 type Note []*types.Const
@@ -15,9 +15,7 @@ type Note []*types.Const
 // WriteTo ...
 func (ns Notes) WriteTo(buf *bytes.Buffer) {
 	newline(buf, 0)
-	for id, n := range ns {
-		// generate id
-		to := id.getID()
+	for to, n := range ns {
 		from := "N_" + strings.Replace(to, ".", "_", -1)
 
 		// write header
@@ -28,7 +26,7 @@ func (ns Notes) WriteTo(buf *bytes.Buffer) {
 			// write title
 			newline(buf, 1)
 			buf.WriteString("<b>")
-			buf.WriteString(id.name())
+			buf.WriteString(extractTypeName(to))
 			buf.WriteString("</b>\n")
 
 			// write elements

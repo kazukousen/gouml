@@ -42,8 +42,8 @@ func (ms Models) writeImplements(buf *bytes.Buffer, depth int) {
 }
 
 type model struct {
-	obj *types.TypeName
-	id
+	obj     *types.TypeName
+	id      string
 	kind    modelKind
 	field   field
 	methods methods
@@ -56,7 +56,7 @@ func (m *model) build() {
 
 	// get type
 	typ := obj.Type()
-	m.full = typ.String()
+	m.id = extractName(typ.String())
 	// TODO: obj.IsAlias() is true
 
 	// named type (means user-defined class in OOP)
@@ -102,7 +102,7 @@ func (m *model) build() {
 }
 
 func (m model) as() string {
-	return m.id.getID()
+	return m.id
 }
 
 func (m model) writeClass(buf *bytes.Buffer) {
@@ -111,11 +111,11 @@ func (m model) writeClass(buf *bytes.Buffer) {
 	newline(buf, 0)
 	// package
 	buf.WriteString(`package "`)
-	buf.WriteString(m.pkg())
+	buf.WriteString(extractPkgName(id))
 	buf.WriteString(`" {`)
 	// class
 	newline(buf, 1)
-	buf.WriteString(m.kind.Printf(m.name(), id))
+	buf.WriteString(m.kind.Printf(extractTypeName(id), id))
 	if m.field.size() > 0 || len(m.methods) > 0 {
 		buf.WriteString(` {`)
 		// fields
@@ -131,6 +131,7 @@ func (m model) writeClass(buf *bytes.Buffer) {
 
 func (m model) writeDiagram(buf *bytes.Buffer, ex exists) {
 	from := m.as()
+
 	newline(buf, 0)
 	m.field.writeDiagram(buf, ex, from, 1)
 
@@ -139,10 +140,12 @@ func (m model) writeDiagram(buf *bytes.Buffer, ex exists) {
 
 	newline(buf, 0)
 	if wrap := m.wrap; wrap != nil {
-		to := id{full: wrap.String()}.getID()
-		buf.WriteString(from)
-		buf.WriteString(" *-- ")
-		buf.WriteString(to)
+		to := extractName(wrap.String())
+		if _, ok := ex[to]; ok {
+			buf.WriteString(from)
+			buf.WriteString(" *-- ")
+			buf.WriteString(to)
+		}
 	}
 }
 
@@ -167,7 +170,7 @@ func (f field) WriteTo(buf *bytes.Buffer, depth int) {
 		buf.WriteString(exportedIcon(v.Exported()))
 		buf.WriteString(v.Name())
 		buf.WriteString(": ")
-		buf.WriteString(v.Type().String())
+		buf.WriteString(extractName(v.Type().String()))
 	}
 }
 
@@ -236,7 +239,7 @@ func (m method) WriteTo(buf *bytes.Buffer, depth int) {
 			buf.WriteString(", ")
 		}
 		v := param.At(i)
-		name, typ := v.Name(), v.Type().String()
+		name, typ := v.Name(), extractName(v.Type().String())
 		buf.WriteString(name)
 		buf.WriteString(": ")
 		buf.WriteString(typ)
@@ -256,7 +259,7 @@ func (m method) WriteTo(buf *bytes.Buffer, depth int) {
 			buf.WriteString(", ")
 		}
 		v := res.At(i)
-		name, typ := v.Name(), v.Type().String()
+		name, typ := v.Name(), extractName(v.Type().String())
 		if name != "" {
 			buf.WriteString(name)
 			buf.WriteString(": ")

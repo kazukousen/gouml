@@ -46,7 +46,7 @@ func Gen(baseDir, out string) error {
 		// declared constant
 		case *types.Const:
 			if named, _ := obj.Type().(*types.Named); named != nil {
-				id := id{full: named.String()}
+				id := extractName(named.String())
 				notes[id] = append(notes[id], obj)
 			}
 		}
