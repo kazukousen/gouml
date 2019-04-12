@@ -28,7 +28,7 @@ gouml.Notes *-- gouml.Note
 package "gouml" {
 	class "field" as gouml.field <<V,Orchid>> {
 		-st: *go/types.Struct
-		-size()int
+		-size(): int
 		+WriteTo(buf: *bytes.Buffer, depth: int)
 		-writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
 	}
@@ -39,9 +39,9 @@ package "gouml" {
 package "gouml" {
 	class "id" as gouml.id <<V,Orchid>> {
 		-full: string
-		-getID()string
-		-pkg()string
-		-name()string
+		-getID(): string
+		-pkg(): string
+		-name(): string
 		-split(): (string, string)
 	}
 }
@@ -76,7 +76,7 @@ package "gouml" {
 		-methods: gouml.methods
 		-wrap: *go/types.Named
 		-build()
-		-as()string
+		-as(): string
 		-writeClass(buf: *bytes.Buffer)
 		-writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
 	}
@@ -90,7 +90,7 @@ package "gouml" {
 
 package "gouml" {
 	class "modelKind" as gouml.modelKind <<V,Orchid>> {
-		+Printf(name: string, alias: string)string
+		+Printf(name: string, alias: string): string
 	}
 }
 
