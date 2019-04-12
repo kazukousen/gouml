@@ -2,12 +2,13 @@
 package "gouml" {
 	class "Models" as gouml.Models <<E,#FFCC00>> {
 		-append(obj: *go/types.TypeName)
-		+WriteTo(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
+		+WriteTo(buf: *bytes.Buffer, ex: gouml.exists)
 		-writeImplements(buf: *bytes.Buffer, depth: int)
 	}
 }
 
 
+	gouml.Models ..> gouml.exists : <<use>> 
 gouml.Models *-- gouml.model
 package "gouml" {
 	class "Note" as gouml.Note <<V,Orchid>> {
@@ -26,11 +27,17 @@ package "gouml" {
 
 gouml.Notes *-- gouml.Note
 package "gouml" {
+	class "exists" as gouml.exists <<V,Orchid>>
+}
+
+
+
+package "gouml" {
 	class "field" as gouml.field <<V,Orchid>> {
 		-st: *go/types.Struct
 		-size(): int
 		+WriteTo(buf: *bytes.Buffer, depth: int)
-		-writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
+		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists, from: string, depth: int)
 	}
 }
 
@@ -52,7 +59,7 @@ package "gouml" {
 	class "method" as gouml.method <<V,Orchid>> {
 		-f: *go/types.Func
 		+WriteTo(buf: *bytes.Buffer, depth: int)
-		-writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
+		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists, from: string, depth: int)
 	}
 }
 
@@ -61,7 +68,7 @@ package "gouml" {
 package "gouml" {
 	class "methods" as gouml.methods <<V,Orchid>> {
 		+WriteTo(buf: *bytes.Buffer, depth: int)
-		-writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{}, from: string, depth: int)
+		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists, from: string, depth: int)
 	}
 }
 
@@ -78,7 +85,7 @@ package "gouml" {
 		-build()
 		-as(): string
 		-writeClass(buf: *bytes.Buffer)
-		-writeDiagram(buf: *bytes.Buffer, exists: map[gouml.id]struct{})
+		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists)
 	}
 }
 

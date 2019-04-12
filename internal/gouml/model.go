@@ -15,10 +15,10 @@ func (ms *Models) append(obj *types.TypeName) {
 }
 
 // WriteTo ...
-func (ms Models) WriteTo(buf *bytes.Buffer, exists map[id]struct{}) {
+func (ms Models) WriteTo(buf *bytes.Buffer, ex exists) {
 	for _, m := range ms {
 		m.writeClass(buf)
-		m.writeDiagram(buf, exists)
+		m.writeDiagram(buf, ex)
 	}
 	ms.writeImplements(buf, 1)
 }
@@ -129,13 +129,13 @@ func (m model) writeClass(buf *bytes.Buffer) {
 	buf.WriteString("}")
 }
 
-func (m model) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}) {
+func (m model) writeDiagram(buf *bytes.Buffer, ex exists) {
 	from := m.as()
 	newline(buf, 0)
-	m.field.writeDiagram(buf, exists, from, 1)
+	m.field.writeDiagram(buf, ex, from, 1)
 
 	newline(buf, 0)
-	m.methods.writeDiagram(buf, exists, from, 1)
+	m.methods.writeDiagram(buf, ex, from, 1)
 
 	newline(buf, 0)
 	if wrap := m.wrap; wrap != nil {
@@ -171,7 +171,7 @@ func (f field) WriteTo(buf *bytes.Buffer, depth int) {
 	}
 }
 
-func (f field) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
+func (f field) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth int) {
 	if f.st == nil {
 		return
 	}
@@ -186,9 +186,8 @@ func (f field) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from stri
 		if sl, ok := typ.(*types.Slice); ok {
 			typ = sl.Elem()
 		}
-		id := id{full: typ.String()}
-		to := id.getID()
-		if _, ok := exists[id]; !ok {
+		to := extractName(typ.String())
+		if _, ok := ex[to]; !ok {
 			continue
 		}
 		newline(buf, depth)
@@ -206,9 +205,9 @@ func (ms methods) WriteTo(buf *bytes.Buffer, depth int) {
 	}
 }
 
-func (ms methods) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
+func (ms methods) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth int) {
 	for _, m := range ms {
-		m.writeDiagram(buf, exists, from, depth)
+		m.writeDiagram(buf, ex, from, depth)
 	}
 }
 
@@ -269,7 +268,7 @@ func (m method) WriteTo(buf *bytes.Buffer, depth int) {
 	}
 }
 
-func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from string, depth int) {
+func (m method) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth int) {
 	if m.f == nil {
 		return
 	}
@@ -295,9 +294,8 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 		if sl, ok := typ.(*types.Slice); ok {
 			typ = sl.Elem()
 		}
-		id := id{full: typ.String()}
-		to := id.getID()
-		if _, ok := exists[id]; !ok {
+		to := extractName(typ.String())
+		if _, ok := ex[to]; !ok {
 			continue
 		}
 		newline(buf, depth)
@@ -320,9 +318,8 @@ func (m method) writeDiagram(buf *bytes.Buffer, exists map[id]struct{}, from str
 		if sl, ok := typ.(*types.Slice); ok {
 			typ = sl.Elem()
 		}
-		id := id{full: typ.String()}
-		to := id.getID()
-		if _, ok := exists[id]; !ok {
+		to := extractName(typ.String())
+		if _, ok := ex[to]; !ok {
 			continue
 		}
 		newline(buf, depth)

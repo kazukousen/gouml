@@ -12,6 +12,16 @@ func newline(dst *bytes.Buffer, depth int) {
 	}
 }
 
+func extractName(full string) string {
+	if strings.Contains(full, "/") {
+		parts := strings.Split(full, "/")
+		full = parts[len(parts)-1]
+	}
+	return full
+}
+
+type exists map[string]struct{}
+
 type id struct {
 	full string
 }

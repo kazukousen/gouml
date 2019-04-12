@@ -22,7 +22,7 @@ func Gen(baseDir, out string) error {
 		return err
 	}
 	objects := []types.Object{}
-	exists := map[id]struct{}{}
+	ex := exists{}
 	for _, pkg := range pkgs {
 		scope := pkg.Scope()
 		for _, name := range scope.Names() {
@@ -30,7 +30,7 @@ func Gen(baseDir, out string) error {
 			objects = append(objects, obj)
 
 			if obj.Pkg().Name() == pkg.Name() {
-				exists[id{full: obj.Type().String()}] = struct{}{}
+				ex[extractName(obj.Type().String())] = struct{}{}
 			}
 		}
 	}
@@ -53,7 +53,7 @@ func Gen(baseDir, out string) error {
 	}
 
 	buf := &bytes.Buffer{}
-	models.WriteTo(buf, exists)
+	models.WriteTo(buf, ex)
 	notes.WriteTo(buf)
 	newline(buf, 0)
 
