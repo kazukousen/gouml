@@ -2,6 +2,7 @@ package gouml
 
 import (
 	"bytes"
+	"go/token"
 	"go/types"
 )
 
@@ -94,6 +95,11 @@ func (m *model) build() {
 		if named, _ := un.Elem().(*types.Named); named != nil {
 			m.wrap = named
 		}
+
+	// first-class function
+	case *types.Signature:
+		f := types.NewFunc(token.NoPos, obj.Pkg(), obj.Name(), un)
+		m.methods = append(m.methods, method{f: f})
 	}
 
 	if m.kind == "" {
