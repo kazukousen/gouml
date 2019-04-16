@@ -196,7 +196,7 @@ func (f field) typeString(buf *bytes.Buffer, typ types.Type) {
 		buf.WriteString("}")
 		return
 	}
-	buf.WriteString(typ.String())
+	buf.WriteString(extractName(typ.String()))
 }
 
 func (f field) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth int) {
