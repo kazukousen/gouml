@@ -176,8 +176,27 @@ func (f field) WriteTo(buf *bytes.Buffer, depth int) {
 		buf.WriteString(exportedIcon(v.Exported()))
 		buf.WriteString(v.Name())
 		buf.WriteString(": ")
-		buf.WriteString(extractName(v.Type().String()))
+		f.typeString(buf, v.Type())
 	}
+}
+
+func (f field) typeString(buf *bytes.Buffer, typ types.Type) {
+	switch typ := typ.(type) {
+	case *types.Struct:
+		buf.WriteString("struct{")
+		for i := 0; i < typ.NumFields(); i++ {
+			if i > 0 {
+				buf.WriteString("; ")
+			}
+			v := typ.Field(i)
+			buf.WriteString(v.Name())
+			buf.WriteString(": ")
+			f.typeString(buf, v.Type())
+		}
+		buf.WriteString("}")
+		return
+	}
+	buf.WriteString(typ.String())
 }
 
 func (f field) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth int) {
