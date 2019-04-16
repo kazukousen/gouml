@@ -1,4 +1,4 @@
-package gouml
+package plantuml
 
 import (
 	"bytes"
@@ -8,6 +8,15 @@ import (
 
 // Notes ...
 type Notes map[string]Note
+
+func (ns Notes) append(k string, c *types.Const) {
+	note, ok := ns[k]
+	if !ok {
+		note = []*types.Const{}
+	}
+	note = append(note, c)
+	ns[k] = note
+}
 
 // Note ...
 type Note []*types.Const

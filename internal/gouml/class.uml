@@ -1,102 +1,156 @@
 
 package "gouml" {
-	class "Models" as gouml.Models <<E,#FFCC00>> {
-		-append(obj: types.TypeName)
-		+WriteTo(buf: *bytes.Buffer, ex: gouml.exists)
-		-writeImplements(buf: *bytes.Buffer, depth: int)
-	}
-}
-
-
-	gouml.Models ..> gouml.exists : <<use>> 
-gouml.Models *-- gouml.model
-package "gouml" {
-	class "Note" as gouml.Note <<V,Orchid>> {
-		+WriteTo(buf: *bytes.Buffer, depth: int)
+	interface "Generator" as gouml.Generator {
+		+OutputFile(out: string): error
+		+Read(path: string): error
+		+ReadDir(baseDir: string): error
 	}
 }
 
 
 
 package "gouml" {
-	class "Notes" as gouml.Notes <<V,Orchid>> {
+	interface "Parser" as gouml.Parser {
+		+Build(pkgs: types.Package)
 		+WriteTo(buf: *bytes.Buffer)
 	}
 }
 
 
-gouml.Notes *-- gouml.Note
+
 package "gouml" {
-	class "exists" as gouml.exists <<V,Orchid>>
+	class "generator" as gouml.generator <<E,#FFCC00>> {
+		-parser: gouml.Parser
+		-fset: token.FileSet
+		-astPkgs: ast.Package
+		-pkgs: types.Package
+		+OutputFile(out: string): error
+		+Read(path: string): error
+		+ReadDir(baseDir: string): error
+		-check(): error
+		-visit(path: string, f: os.FileInfo, err: error): error
+	}
+}
+
+	gouml.generator --> gouml.Parser
+
+
+package "plantuml" {
+	class "Models" as plantuml.Models <<E,#FFCC00>> {
+		-append(obj: types.TypeName)
+		+WriteTo(buf: *bytes.Buffer, ex: plantuml.exists)
+		-writeImplements(buf: *bytes.Buffer, depth: int)
+	}
+}
+
+
+	plantuml.Models ..> plantuml.exists : <<use>> 
+plantuml.Models *-- plantuml.model
+package "plantuml" {
+	class "Note" as plantuml.Note <<V,Orchid>> {
+		+WriteTo(buf: *bytes.Buffer, depth: int)
+	}
 }
 
 
 
-package "gouml" {
-	class "field" as gouml.field <<V,Orchid>> {
+package "plantuml" {
+	class "Notes" as plantuml.Notes <<V,Orchid>> {
+		-append(k: string, c: types.Const)
+		+WriteTo(buf: *bytes.Buffer)
+	}
+}
+
+
+plantuml.Notes *-- plantuml.Note
+package "plantuml" {
+	class "exists" as plantuml.exists <<V,Orchid>>
+}
+
+
+
+package "plantuml" {
+	class "field" as plantuml.field <<V,Orchid>> {
 		-st: types.Struct
 		-size(): int
 		+WriteTo(buf: *bytes.Buffer, depth: int)
 		-typeString(buf: *bytes.Buffer, typ: types.Type)
-		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists, from: string, depth: int)
+		-writeDiagram(buf: *bytes.Buffer, ex: plantuml.exists, from: string, depth: int)
 	}
 }
 
 
 
-package "gouml" {
-	class "method" as gouml.method <<V,Orchid>> {
+package "plantuml" {
+	class "method" as plantuml.method <<V,Orchid>> {
 		-f: types.Func
 		+WriteTo(buf: *bytes.Buffer, depth: int)
-		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists, from: string, depth: int)
+		-writeDiagram(buf: *bytes.Buffer, ex: plantuml.exists, from: string, depth: int)
 	}
 }
 
 
 
-package "gouml" {
-	class "methods" as gouml.methods <<V,Orchid>> {
+package "plantuml" {
+	class "methods" as plantuml.methods <<V,Orchid>> {
 		+WriteTo(buf: *bytes.Buffer, depth: int)
-		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists, from: string, depth: int)
+		-writeDiagram(buf: *bytes.Buffer, ex: plantuml.exists, from: string, depth: int)
 	}
 }
 
 
-gouml.methods *-- gouml.method
-package "gouml" {
-	class "model" as gouml.model <<E,#FFCC00>> {
+plantuml.methods *-- plantuml.method
+package "plantuml" {
+	class "model" as plantuml.model <<E,#FFCC00>> {
 		-obj: types.TypeName
 		-id: string
-		-kind: gouml.modelKind
-		-field: gouml.field
-		-methods: gouml.methods
+		-kind: plantuml.modelKind
+		-field: plantuml.field
+		-methods: plantuml.methods
 		-wrap: types.Named
 		-build()
 		-as(): string
 		-writeClass(buf: *bytes.Buffer)
-		-writeDiagram(buf: *bytes.Buffer, ex: gouml.exists)
+		-writeDiagram(buf: *bytes.Buffer, ex: plantuml.exists)
 	}
 }
 
-	gouml.model --> gouml.modelKind
-	gouml.model --> gouml.field
-	gouml.model --> gouml.methods
+	plantuml.model --> plantuml.modelKind
+	plantuml.model --> plantuml.field
+	plantuml.model --> plantuml.methods
 
 
-package "gouml" {
-	class "modelKind" as gouml.modelKind <<V,Orchid>> {
+package "plantuml" {
+	class "modelKind" as plantuml.modelKind <<V,Orchid>> {
 		+Printf(name: string, alias: string): string
 	}
 }
 
 
 
+package "plantuml" {
+	class "parser" as plantuml.parser <<E,#FFCC00>> {
+		-models: plantuml.Models
+		-notes: plantuml.Notes
+		-ex: plantuml.exists
+		+Build(pkgs: types.Package)
+		+WriteTo(buf: *bytes.Buffer)
+	}
+}
 
-note as N_gouml_modelKind
+	plantuml.parser --> plantuml.Models
+	plantuml.parser --> plantuml.Notes
+	plantuml.parser --> plantuml.exists
+
+
+	gouml.generator --|> gouml.Generator
+	plantuml.parser --|> gouml.Parser
+
+note as N_plantuml_modelKind
 	<b>modelKind</b>
 
 	modelKindEntity
 	modelKindInterface
 	modelKindValueObject
 end note
-N_gouml_modelKind --> gouml.modelKind
+N_plantuml_modelKind --> plantuml.modelKind

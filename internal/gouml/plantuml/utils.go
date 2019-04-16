@@ -1,4 +1,4 @@
-package gouml
+package plantuml
 
 import (
 	"bytes"

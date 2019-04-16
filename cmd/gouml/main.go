@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"os"
+	"path"
+
+	"github.com/kazukousen/gouml/internal/gouml/plantuml"
 
 	"github.com/kazukousen/gouml/internal/gouml"
 
@@ -21,7 +24,9 @@ func main() {
 			Action: func(c *cli.Context) error {
 				baseDir := c.String("dir")
 				out := c.String("out")
-				return gouml.Gen(baseDir, out)
+				gen := gouml.NewGenerator(plantuml.NewParser())
+				gen.ReadDir(baseDir)
+				return gen.OutputFile(path.Join(baseDir, out))
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
