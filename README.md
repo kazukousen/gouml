@@ -1,3 +1,8 @@
+Automatically generate PlantUML from Go Code.  
+
+Note that the interface of this library is still ALPHA level quality.  
+Breaking changes will be introduced frequently.  
+
 ## Getting Started
 
 ```sh
