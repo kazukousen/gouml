@@ -1,0 +1,48 @@
+
+package "main" {
+	interface "Animal" as main.Animal {
+		+Cry(): string
+	}
+}
+
+
+
+package "main" {
+	class "Cat" as main.Cat <<V,Orchid>> {
+		+Name: string
+		+Cry(): string
+	}
+}
+
+
+
+package "main" {
+	class "CryFunc" as main.CryFunc <<V,Orchid>> {
+		+CryFunc(an: main.Animal): string
+	}
+}
+
+
+	main.CryFunc ..> main.Animal : <<use>> 
+
+package "main" {
+	class "Dog" as main.Dog <<V,Orchid>> {
+		+Name: string
+		+Cry(): string
+	}
+}
+
+
+
+package "main" {
+	class "foo" as main.foo <<V,Orchid>> {
+		-id: int
+		-bar: struct{id: int; baz: struct{id: int}}
+	}
+}
+
+
+
+	main.Cat --|> main.Animal
+	main.Dog --|> main.Animal
+

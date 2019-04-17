@@ -9,7 +9,6 @@ import (
 	"go/token"
 	"go/types"
 	"os"
-	"path"
 	"path/filepath"
 
 	"golang.org/x/xerrors"
@@ -24,6 +23,7 @@ type Generator interface {
 
 type generator struct {
 	parser  Parser
+	targets []string
 	fset    *token.FileSet
 	astPkgs map[string]*ast.Package
 	pkgs    []*types.Package
@@ -33,6 +33,7 @@ type generator struct {
 func NewGenerator(parser Parser) Generator {
 	return &generator{
 		parser:  parser,
+		targets: []string{},
 		fset:    token.NewFileSet(),
 		astPkgs: map[string]*ast.Package{},
 		pkgs:    []*types.Package{},
@@ -40,6 +41,7 @@ func NewGenerator(parser Parser) Generator {
 }
 
 func (g generator) OutputFile(out string) error {
+	g.ast()
 	g.check()
 
 	g.parser.Build(g.pkgs)
@@ -47,13 +49,15 @@ func (g generator) OutputFile(out string) error {
 	buf := &bytes.Buffer{}
 	g.parser.WriteTo(buf)
 
-	filename := path.Join(out + ".uml")
+	filename := out + ".uml"
 	uml, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer uml.Close()
 	fmt.Fprintf(uml, buf.String())
+
+	fmt.Printf("output to file: %s\n", filename)
 
 	return nil
 }
@@ -95,6 +99,18 @@ func (g *generator) check() error {
 
 func (g *generator) visit(path string, f os.FileInfo, err error) error {
 	if ext := filepath.Ext(path); ext == ".go" {
+		path, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		g.targets = append(g.targets, path)
+	}
+	return nil
+}
+
+func (g generator) ast() error {
+	for _, path := range g.targets {
+		fmt.Printf("parsing AST: %s\n", path)
 		src, err := parser.ParseFile(g.fset, path, nil, parser.ParseComments)
 		if err != nil {
 			return xerrors.Errorf("ParseFile panic: %w", err)
