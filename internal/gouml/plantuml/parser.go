@@ -46,8 +46,7 @@ func (p *parser) Build(pkgs []*types.Package) {
 		// declared constant
 		case *types.Const:
 			if named, _ := obj.Type().(*types.Named); named != nil {
-				id := extractName(named.String())
-				p.notes.append(id, obj)
+				p.notes.append(named, obj)
 			}
 		}
 	}
