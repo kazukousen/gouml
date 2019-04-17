@@ -31,7 +31,9 @@ func (p *parser) Build(pkgs []*types.Package) {
 			objects = append(objects, obj)
 
 			if obj.Pkg().Name() == pkg.Name() {
-				p.ex[extractName(obj.Type().String())] = struct{}{}
+				if named, _ := obj.Type().(*types.Named); named != nil {
+					p.ex[extractName(named.String())] = struct{}{}
+				}
 			}
 		}
 	}
