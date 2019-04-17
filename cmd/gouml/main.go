@@ -26,12 +26,16 @@ func main() {
 				outDir := "./"
 				if baseDir := c.String("dir"); len(baseDir) > 0 {
 					outDir = baseDir
-					gen.ReadDir(baseDir)
+					if err := gen.ReadDir(baseDir); err != nil {
+						return err
+					}
 				}
 
 				if files := c.StringSlice("file"); len(files) > 0 {
 					for _, path := range files {
-						gen.Read(path)
+						if err := gen.Read(path); err != nil {
+							return err
+						}
 					}
 				}
 

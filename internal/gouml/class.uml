@@ -1,4 +1,42 @@
 
+package "gouml" {
+	interface "Generator" as gouml.Generator {
+		+OutputFile(out: string): error
+		+Read(path: string): error
+		+ReadDir(baseDir: string): error
+	}
+}
+
+
+
+package "gouml" {
+	interface "Parser" as gouml.Parser {
+		+Build(pkgs: types.Package)
+		+WriteTo(buf: *bytes.Buffer)
+	}
+}
+
+
+
+package "gouml" {
+	class "generator" as gouml.generator <<E,#FFCC00>> {
+		-parser: gouml.Parser
+		-targets: []string
+		-fset: token.FileSet
+		-astPkgs: ast.Package
+		-pkgs: types.Package
+		+OutputFile(out: string): error
+		+Read(path: string): error
+		+ReadDir(baseDir: string): error
+		-check(): error
+		-visit(path: string, f: os.FileInfo, err: error): error
+		-ast(): error
+	}
+}
+
+	gouml.generator --> gouml.Parser
+
+
 package "plantuml" {
 	class "Models" as plantuml.Models <<E,#FFCC00>> {
 		-append(obj: types.TypeName)
@@ -107,44 +145,8 @@ package "plantuml" {
 	plantuml.parser --> plantuml.exists
 
 
-package "gouml" {
-	interface "Generator" as gouml.Generator {
-		+OutputFile(out: string): error
-		+Read(path: string): error
-		+ReadDir(baseDir: string): error
-	}
-}
-
-
-
-package "gouml" {
-	interface "Parser" as gouml.Parser {
-		+Build(pkgs: types.Package)
-		+WriteTo(buf: *bytes.Buffer)
-	}
-}
-
-
-
-package "gouml" {
-	class "generator" as gouml.generator <<E,#FFCC00>> {
-		-parser: gouml.Parser
-		-fset: token.FileSet
-		-astPkgs: ast.Package
-		-pkgs: types.Package
-		+OutputFile(out: string): error
-		+Read(path: string): error
-		+ReadDir(baseDir: string): error
-		-check(): error
-		-visit(path: string, f: os.FileInfo, err: error): error
-	}
-}
-
-	gouml.generator --> gouml.Parser
-
-
-	plantuml.parser -up-|> gouml.Parser
 	gouml.generator -up-|> gouml.Generator
+	plantuml.parser -up-|> gouml.Parser
 
 package "plantuml" {
 	note as N_plantuml_modelKind
