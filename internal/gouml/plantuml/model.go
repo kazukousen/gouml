@@ -35,7 +35,7 @@ func (ms Models) writeImplements(buf *bytes.Buffer, depth int) {
 			if types.AssignableTo(T, U) || (!types.IsInterface(T) && types.AssignableTo(types.NewPointer(T), U)) {
 				newline(buf, depth)
 				buf.WriteString(t.as())
-				buf.WriteString(" --|> ")
+				buf.WriteString(" -up-|> ")
 				buf.WriteString(u.as())
 			}
 		}

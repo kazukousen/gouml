@@ -143,8 +143,8 @@ package "plantuml" {
 	plantuml.parser --> plantuml.exists
 
 
-	gouml.generator --|> gouml.Generator
-	plantuml.parser --|> gouml.Parser
+	gouml.generator -up-|> gouml.Generator
+	plantuml.parser -up-|> gouml.Parser
 
 note as N_plantuml_modelKind
 	<b>modelKind</b>
