@@ -26,6 +26,12 @@ func main() {
 				out := c.String("out")
 				gen := gouml.NewGenerator(plantuml.NewParser())
 				gen.ReadDir(baseDir)
+
+				if files := c.StringSlice("file"); len(files) > 0 {
+					for _, path := range files {
+						gen.Read(path)
+					}
+				}
 				return gen.OutputFile(path.Join(baseDir, out))
 			},
 			Flags: []cli.Flag{
@@ -33,6 +39,9 @@ func main() {
 					Name:  "dir, d",
 					Value: "./",
 					Usage: "Directory you want to parse",
+				},
+				cli.StringSliceFlag{
+					Name: "file, f",
 				},
 				cli.StringFlag{
 					Name:  "out, o",

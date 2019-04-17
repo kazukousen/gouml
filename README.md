@@ -1,5 +1,8 @@
 Automatically generate PlantUML from Go Code.  
 
+example (self-reference):  
+![self-ref](self-ref.png)
+
 Note that the interface of this library is still ALPHA level quality.  
 Breaking changes will be introduced frequently.  
 
@@ -9,19 +12,19 @@ Breaking changes will be introduced frequently.
 $ go get -u github.com/kazukousen/gouml/cmd/gouml
 ```
 
-Run `gouml init` . This will parse `.go` files and generate the plantUML file.  
-(Option) If you requires point to base directory, you can use `-d` flag.  
+Run `gouml init` (or `gouml i`) . This will parse `.go` files and generate the plantUML file.  
 
-```sh
-$ gouml init -d example/model/
+### Directory-base
+If you requires point to base directory, you can use `-d` flag.  
+
+```console
+$ gouml i -d path/to/package/
 ```
 
-## Example
+### File-base
+If you requires parse one `.go` file. you can use `-f` flag.
 
-from `example/model/` directory.  
+```console
+$ gouml i -f path/to/package/foo.go -f path/to/package/bar.go
+```
 
-![sample image](/example.png)
-
-and self-reference :tada:  
-
-![self-ref image](self-ref.png)
