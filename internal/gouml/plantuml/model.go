@@ -214,6 +214,9 @@ func (f field) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth int
 		if sl, ok := typ.(*types.Slice); ok {
 			typ = sl.Elem()
 		}
+		if _, ok := typ.(*types.Named); !ok {
+			continue
+		}
 		to := extractName(typ.String())
 		if _, ok := ex[to]; !ok {
 			continue
@@ -322,6 +325,9 @@ func (m method) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth in
 		if sl, ok := typ.(*types.Slice); ok {
 			typ = sl.Elem()
 		}
+		if _, ok := typ.(*types.Named); !ok {
+			continue
+		}
 		to := extractName(typ.String())
 		if _, ok := ex[to]; !ok {
 			continue
@@ -345,6 +351,9 @@ func (m method) writeDiagram(buf *bytes.Buffer, ex exists, from string, depth in
 		}
 		if sl, ok := typ.(*types.Slice); ok {
 			typ = sl.Elem()
+		}
+		if _, ok := typ.(*types.Named); !ok {
+			continue
 		}
 		to := extractName(typ.String())
 		if _, ok := ex[to]; !ok {
