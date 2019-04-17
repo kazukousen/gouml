@@ -1,40 +1,4 @@
 
-package "gouml" {
-	interface "Generator" as gouml.Generator {
-		+OutputFile(out: string): error
-		+Read(path: string): error
-		+ReadDir(baseDir: string): error
-	}
-}
-
-
-
-package "gouml" {
-	interface "Parser" as gouml.Parser {
-		+Build(pkgs: types.Package)
-		+WriteTo(buf: *bytes.Buffer)
-	}
-}
-
-
-
-package "gouml" {
-	class "generator" as gouml.generator <<E,#FFCC00>> {
-		-parser: gouml.Parser
-		-fset: token.FileSet
-		-astPkgs: ast.Package
-		-pkgs: types.Package
-		+OutputFile(out: string): error
-		+Read(path: string): error
-		+ReadDir(baseDir: string): error
-		-check(): error
-		-visit(path: string, f: os.FileInfo, err: error): error
-	}
-}
-
-	gouml.generator --> gouml.Parser
-
-
 package "plantuml" {
 	class "Models" as plantuml.Models <<E,#FFCC00>> {
 		-append(obj: types.TypeName)
@@ -56,7 +20,7 @@ package "plantuml" {
 
 package "plantuml" {
 	class "Notes" as plantuml.Notes <<V,Orchid>> {
-		-append(k: string, c: types.Const)
+		-append(k: types.Named, c: types.Const)
 		+WriteTo(buf: *bytes.Buffer)
 	}
 }
@@ -143,14 +107,52 @@ package "plantuml" {
 	plantuml.parser --> plantuml.exists
 
 
-	gouml.generator -up-|> gouml.Generator
+package "gouml" {
+	interface "Generator" as gouml.Generator {
+		+OutputFile(out: string): error
+		+Read(path: string): error
+		+ReadDir(baseDir: string): error
+	}
+}
+
+
+
+package "gouml" {
+	interface "Parser" as gouml.Parser {
+		+Build(pkgs: types.Package)
+		+WriteTo(buf: *bytes.Buffer)
+	}
+}
+
+
+
+package "gouml" {
+	class "generator" as gouml.generator <<E,#FFCC00>> {
+		-parser: gouml.Parser
+		-fset: token.FileSet
+		-astPkgs: ast.Package
+		-pkgs: types.Package
+		+OutputFile(out: string): error
+		+Read(path: string): error
+		+ReadDir(baseDir: string): error
+		-check(): error
+		-visit(path: string, f: os.FileInfo, err: error): error
+	}
+}
+
+	gouml.generator --> gouml.Parser
+
+
 	plantuml.parser -up-|> gouml.Parser
+	gouml.generator -up-|> gouml.Generator
 
-note as N_plantuml_modelKind
-	<b>modelKind</b>
+package "plantuml" {
+	note as N_plantuml_modelKind
+		<b>modelKind</b>
 
-	modelKindEntity
-	modelKindInterface
-	modelKindValueObject
-end note
+		modelKindEntity
+		modelKindInterface
+		modelKindValueObject
+	end note
+}
 N_plantuml_modelKind --> plantuml.modelKind
