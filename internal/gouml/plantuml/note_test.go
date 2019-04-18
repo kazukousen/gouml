@@ -12,17 +12,6 @@ import (
 	"github.com/kazukousen/gouml/internal/gouml/plantuml"
 )
 
-func trim(src string) string {
-	dst := make([]byte, 0, len(src))
-	for _, ch := range src {
-		if ch == '\t' || ch == '\n' {
-			continue
-		}
-		dst = append(dst, byte(ch))
-	}
-	return string(dst)
-}
-
 func TestNote(t *testing.T) {
 	notes := plantuml.Notes{}
 	fset := token.NewFileSet()
