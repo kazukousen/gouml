@@ -154,10 +154,3 @@ func (m model) writeDiagram(buf *bytes.Buffer, ex exists) {
 		}
 	}
 }
-
-func exportedIcon(exported bool) string {
-	if exported {
-		return "+"
-	}
-	return "-"
-}
