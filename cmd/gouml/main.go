@@ -3,12 +3,10 @@ package main
 import (
 	"log"
 	"os"
-	"path"
-
-	"github.com/kazukousen/gouml/internal/gouml/plantuml"
+	"path/filepath"
 
 	"github.com/kazukousen/gouml/internal/gouml"
-
+	"github.com/kazukousen/gouml/internal/gouml/plantuml"
 	"github.com/urfave/cli"
 )
 
@@ -23,9 +21,7 @@ func main() {
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
 				gen := gouml.NewGenerator(plantuml.NewParser())
-				outDir := "./"
 				if dirs := c.StringSlice("dir"); len(dirs) > 0 {
-					outDir = dirs[0]
 					for _, dir := range dirs {
 						if err := gen.ReadDir(dir); err != nil {
 							return err
@@ -41,8 +37,11 @@ func main() {
 					}
 				}
 
-				out := c.String("out")
-				return gen.OutputFile(path.Join(outDir, out))
+				out, err := filepath.Abs(c.String("out"))
+				if err != nil {
+					return err
+				}
+				return gen.OutputFile(out)
 			},
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
@@ -54,8 +53,8 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "out, o",
-					Value: "class",
-					Usage: "File Name (*.uml) you want to parsed",
+					Value: "class.uml",
+					Usage: "File Name you want to parsed",
 				},
 			},
 		},
