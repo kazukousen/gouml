@@ -28,3 +28,8 @@ If you requires parse one `.go` file. you can use `-f` flag.
 $ gouml i -f path/to/package/foo.go -f path/to/package/bar.go
 ```
 
+## License
+
+Copyright (c) 2019-present [Kazuki Nitta](https://github.com/kazukousen)
+
+Licensed under [MIT License](./LICENSE)
