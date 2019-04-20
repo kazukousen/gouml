@@ -40,7 +40,7 @@ func NewGenerator(parser Parser) Generator {
 	}
 }
 
-func (g generator) OutputFile(filename string) error {
+func (g generator) OutputFile(out string) error {
 	if err := g.ast(); err != nil {
 		return err
 	}
@@ -53,6 +53,7 @@ func (g generator) OutputFile(filename string) error {
 	buf := &bytes.Buffer{}
 	g.parser.WriteTo(buf)
 
+	filename := out + ".uml"
 	uml, err := os.Create(filename)
 	if err != nil {
 		return err
