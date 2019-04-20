@@ -41,8 +41,12 @@ func NewGenerator(parser Parser) Generator {
 }
 
 func (g generator) OutputFile(out string) error {
-	g.ast()
-	g.check()
+	if err := g.ast(); err != nil {
+		return err
+	}
+	if err := g.check(); err != nil {
+		return err
+	}
 
 	g.parser.Build(g.pkgs)
 
