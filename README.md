@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/kazukousen/gouml.svg?branch=master)](https://travis-ci.org/kazukousen/gouml)  
+
 Automatically generate PlantUML from Go Code.  
 
 example (self-reference):  
