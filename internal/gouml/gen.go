@@ -84,7 +84,7 @@ func (g *generator) ReadDir(baseDir string) error {
 
 func (g *generator) check() error {
 	conf := types.Config{
-		Importer: importer.ForCompiler(g.fset, "source", nil),
+		Importer: importer.Default(),
 		Error: func(err error) {
 			// fmt.Printf("error: %+v\n", err)
 		},
