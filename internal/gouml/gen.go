@@ -65,7 +65,6 @@ func (g generator) OutputFile(filename string) error {
 	return nil
 }
 
-// Read ...
 func (g *generator) Read(path string) error {
 	if err := g.visit(path, nil, nil); err != nil {
 		return err
@@ -73,30 +72,11 @@ func (g *generator) Read(path string) error {
 	return nil
 }
 
-// ReadDir ...
 func (g *generator) ReadDir(baseDir string) error {
 	if err := filepath.Walk(baseDir, g.visit); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (g *generator) check() error {
-	conf := types.Config{
-		Importer: importer.Default(),
-		Error: func(err error) {
-			// fmt.Printf("error: %+v\n", err)
-		},
-	}
-	for _, astPkg := range g.astPkgs {
-		files := []*ast.File{}
-		for _, f := range astPkg.Files {
-			files = append(files, f)
-		}
-		pkg, _ := conf.Check(astPkg.Name, g.fset, files, nil)
-		g.pkgs = append(g.pkgs, pkg)
-	}
 	return nil
 }
 
@@ -128,6 +108,24 @@ func (g generator) ast() error {
 		}
 		pkg.Files[path] = src
 		g.astPkgs[name] = pkg
+	}
+	return nil
+}
+
+func (g *generator) check() error {
+	conf := types.Config{
+		Importer: importer.Default(),
+		Error: func(err error) {
+			// fmt.Printf("error: %+v\n", err)
+		},
+	}
+	for _, astPkg := range g.astPkgs {
+		files := []*ast.File{}
+		for _, f := range astPkg.Files {
+			files = append(files, f)
+		}
+		pkg, _ := conf.Check(astPkg.Name, g.fset, files, nil)
+		g.pkgs = append(g.pkgs, pkg)
 	}
 	return nil
 }
