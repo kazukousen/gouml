@@ -1,9 +1,9 @@
 
 package "gouml" {
 	interface "Generator" as gouml.Generator {
-		+OutputFile(out: string): error
 		+Read(path: string): error
 		+ReadDir(baseDir: string): error
+		+WriteTo(buf: *bytes.Buffer): error
 	}
 }
 
@@ -25,12 +25,12 @@ package "gouml" {
 		-fset: token.FileSet
 		-astPkgs: ast.Package
 		-pkgs: types.Package
-		+OutputFile(filename: string): error
+		+WriteTo(buf: *bytes.Buffer): error
 		+Read(path: string): error
 		+ReadDir(baseDir: string): error
-		-check(): error
 		-visit(path: string, f: os.FileInfo, err: error): error
 		-ast(): error
+		-check(): error
 	}
 }
 

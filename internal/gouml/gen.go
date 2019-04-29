@@ -18,7 +18,7 @@ import (
 type Generator interface {
 	Read(path string) error
 	ReadDir(baseDir string) error
-	OutputFile(out string) error
+	WriteTo(buf *bytes.Buffer) error
 }
 
 type generator struct {
@@ -40,28 +40,15 @@ func NewGenerator(parser Parser) Generator {
 	}
 }
 
-func (g generator) OutputFile(filename string) error {
+func (g generator) WriteTo(buf *bytes.Buffer) error {
 	if err := g.ast(); err != nil {
 		return err
 	}
 	if err := g.check(); err != nil {
 		return err
 	}
-
 	g.parser.Build(g.pkgs)
-
-	buf := &bytes.Buffer{}
 	g.parser.WriteTo(buf)
-
-	uml, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer uml.Close()
-	fmt.Fprintf(uml, buf.String())
-
-	fmt.Printf("output to file: %s\n", filename)
-
 	return nil
 }
 

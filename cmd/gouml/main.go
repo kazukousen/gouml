@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -41,7 +43,20 @@ func main() {
 				if err != nil {
 					return err
 				}
-				return gen.OutputFile(out)
+
+				buf := &bytes.Buffer{}
+				gen.WriteTo(buf)
+
+				uml, err := os.Create(out)
+				if err != nil {
+					return err
+				}
+				defer uml.Close()
+				fmt.Fprintf(uml, buf.String())
+				fmt.Printf("output to file: %s\n", out)
+
+				fmt.Printf("SVG: http://plantuml.com/plantuml/svg/%s\n", plantuml.Compress(buf.String()))
+				return nil
 			},
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
