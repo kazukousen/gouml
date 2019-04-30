@@ -30,6 +30,7 @@ func TestNote(t *testing.T) {
 	)
 	`
 	want := `
+
 	package "time" {
 		note as N_time_Weekday
 		<b>Weekday</b>
@@ -43,8 +44,7 @@ func TestNote(t *testing.T) {
 		Wednesday
 	end note
 	}
-	N_time_Weekday --> time.Weekday
-	`
+	N_time_Weekday --> time.Weekday`
 	file, err := parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
 		t.Errorf(": %+v", err)
@@ -69,6 +69,6 @@ func TestNote(t *testing.T) {
 	buf := &bytes.Buffer{}
 	notes.WriteTo(buf)
 	if g, w := trim(buf.String()), trim(want); g != w {
-		t.Errorf("not equal")
+		t.Errorf("not equal\ngot: %s\nwant: %s", g, w)
 	}
 }
