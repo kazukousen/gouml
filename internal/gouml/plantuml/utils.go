@@ -12,6 +12,13 @@ func newline(dst *bytes.Buffer, depth int) {
 	}
 }
 
+func exportedIcon(exported bool) string {
+	if exported {
+		return "+"
+	}
+	return "-"
+}
+
 func extractName(full string) string {
 	if strings.Contains(full, "/") {
 		parts := strings.Split(full, "/")
