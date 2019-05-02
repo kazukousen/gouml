@@ -7,8 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kazukousen/gouml/internal/gouml"
-	"github.com/kazukousen/gouml/internal/gouml/plantuml"
+	"github.com/kazukousen/gouml"
 	"github.com/urfave/cli"
 )
 
@@ -22,7 +21,7 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
-				gen := gouml.NewGenerator(plantuml.NewParser())
+				gen := gouml.NewGenerator(gouml.PlantUMLParser())
 				if dirs := c.StringSlice("dir"); len(dirs) > 0 {
 					for _, dir := range dirs {
 						if err := gen.ReadDir(dir); err != nil {
@@ -55,7 +54,7 @@ func main() {
 				fmt.Fprintf(uml, buf.String())
 				fmt.Printf("output to file: %s\n", out)
 
-				fmt.Printf("SVG: http://plantuml.com/plantuml/svg/%s\n", plantuml.Compress(buf.String()))
+				fmt.Printf("SVG: http://plantuml.com/plantuml/svg/%s\n", gouml.Compress(buf.String()))
 				return nil
 			},
 			Flags: []cli.Flag{

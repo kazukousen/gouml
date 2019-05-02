@@ -3,12 +3,10 @@ package plantuml
 import (
 	"bytes"
 	"go/types"
-
-	"github.com/kazukousen/gouml/internal/gouml"
 )
 
 // NewParser ...
-func NewParser() gouml.Parser {
+func NewParser() *parser {
 	return &parser{
 		models: Models{},
 		notes:  Notes{},
