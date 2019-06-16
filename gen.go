@@ -27,16 +27,18 @@ type generator struct {
 	fset    *token.FileSet
 	astPkgs map[string]*ast.Package
 	pkgs    []*types.Package
+	isDebug bool
 }
 
 // NewGenerator ...
-func NewGenerator(parser Parser) Generator {
+func NewGenerator(parser Parser, isDebug bool) Generator {
 	return &generator{
 		parser:  parser,
 		targets: []string{},
 		fset:    token.NewFileSet(),
 		astPkgs: map[string]*ast.Package{},
 		pkgs:    []*types.Package{},
+		isDebug: isDebug,
 	}
 }
 
@@ -81,11 +83,11 @@ func (g *generator) visit(path string, f os.FileInfo, err error) error {
 func (g generator) ast() error {
 	for _, path := range g.targets {
 		fmt.Printf("parsing AST: %s\n", path)
-		src, err := parser.ParseFile(g.fset, path, nil, parser.ParseComments)
+		astFile, err := parser.ParseFile(g.fset, path, nil, parser.ParseComments)
 		if err != nil {
 			return xerrors.Errorf("ParseFile panic: %w", err)
 		}
-		name := src.Name.Name
+		name := astFile.Name.Name
 		pkg, ok := g.astPkgs[name]
 		if !ok {
 			pkg = &ast.Package{
@@ -93,7 +95,7 @@ func (g generator) ast() error {
 				Files: make(map[string]*ast.File),
 			}
 		}
-		pkg.Files[path] = src
+		pkg.Files[path] = astFile
 		g.astPkgs[name] = pkg
 	}
 	return nil
@@ -101,9 +103,11 @@ func (g generator) ast() error {
 
 func (g *generator) check() error {
 	conf := types.Config{
-		Importer: importer.Default(),
+		Importer: importer.For("source", nil),
 		Error: func(err error) {
-			// fmt.Printf("error: %+v\n", err)
+			if g.isDebug {
+				fmt.Printf("error: %+v\n", err)
+			}
 		},
 	}
 	for _, astPkg := range g.astPkgs {

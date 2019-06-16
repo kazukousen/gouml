@@ -21,7 +21,7 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
-				gen := gouml.NewGenerator(gouml.PlantUMLParser())
+				gen := gouml.NewGenerator(gouml.PlantUMLParser(), c.Bool("verbose"))
 				if dirs := c.StringSlice("dir"); len(dirs) > 0 {
 					for _, dir := range dirs {
 						if err := gen.ReadDir(dir); err != nil {
@@ -69,6 +69,10 @@ func main() {
 					Name:  "out, o",
 					Value: "class.uml",
 					Usage: "File Name you want to parsed",
+				},
+				cli.BoolFlag{
+					Name:  "verbose",
+					Usage: "debugging",
 				},
 			},
 		},
