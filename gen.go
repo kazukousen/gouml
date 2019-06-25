@@ -10,6 +10,7 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/xerrors"
 )
@@ -70,13 +71,17 @@ func (g *generator) ReadDir(baseDir string) error {
 }
 
 func (g *generator) visit(path string, f os.FileInfo, err error) error {
-	if ext := filepath.Ext(path); ext == ".go" {
-		path, err := filepath.Abs(path)
-		if err != nil {
-			return err
-		}
-		g.targets = append(g.targets, path)
+	if ext := filepath.Ext(path); ext != ".go" {
+		return nil
 	}
+	if strings.HasSuffix(path, "_test.go") {
+		return nil
+	}
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	g.targets = append(g.targets, path)
 	return nil
 }
 

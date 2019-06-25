@@ -25,6 +25,7 @@ package "gouml" {
 		-fset: token.FileSet
 		-astPkgs: ast.Package
 		-pkgs: types.Package
+		-isDebug: bool
 		+WriteTo(buf: *bytes.Buffer): error
 		+Read(path: string): error
 		+ReadDir(baseDir: string): error
