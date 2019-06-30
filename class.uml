@@ -3,7 +3,7 @@
 package "gouml" {
 	interface "Generator" as gouml.Generator {
 		+Read(path: string): error
-		+ReadDir(baseDir: string): error
+		+UpdateIgnore(path: string): error
 		+WriteTo(buf: *bytes.Buffer): error
 	}
 }
@@ -23,14 +23,16 @@ package "gouml" {
 	class "generator" as gouml.generator <<E,#FFCC00>> {
 		-parser: gouml.Parser
 		-targets: []string
+		-ignoreFiles: map[string]struct{}
 		-fset: token.FileSet
 		-astPkgs: ast.Package
 		-pkgs: types.Package
 		-isDebug: bool
 		+WriteTo(buf: *bytes.Buffer): error
 		+Read(path: string): error
-		+ReadDir(baseDir: string): error
 		-visit(path: string, f: os.FileInfo, err: error): error
+		+UpdateIgnore(path: string): error
+		-updateIgnore(path: string, f: os.FileInfo, err: error): error
 		-ast(): error
 		-check(): error
 	}

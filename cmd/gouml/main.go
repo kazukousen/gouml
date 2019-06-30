@@ -13,7 +13,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Version = "0.0.1"
+	app.Version = "0.2"
 	app.Usage = "Automatically generate PlantUML from Go Code."
 	app.Commands = []cli.Command{
 		{
@@ -22,17 +22,18 @@ func main() {
 			Usage:   "Create *.uml",
 			Action: func(c *cli.Context) error {
 				gen := gouml.NewGenerator(gouml.PlantUMLParser(), c.Bool("verbose"))
-				if dirs := c.StringSlice("dir"); len(dirs) > 0 {
-					for _, dir := range dirs {
-						if err := gen.ReadDir(dir); err != nil {
+
+				if ignoreFiles := c.StringSlice("ignore"); len(ignoreFiles) > 0 {
+					for _, file := range ignoreFiles {
+						if err := gen.UpdateIgnore(file); err != nil {
 							return err
 						}
 					}
 				}
 
 				if files := c.StringSlice("file"); len(files) > 0 {
-					for _, path := range files {
-						if err := gen.Read(path); err != nil {
+					for _, file := range files {
+						if err := gen.Read(file); err != nil {
 							return err
 						}
 					}
@@ -59,11 +60,13 @@ func main() {
 			},
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
-					Name:  "dir, d",
-					Usage: "Directory you want to parse",
+					Name:  "file, f",
+					Value: &cli.StringSlice{"./"},
+					Usage: "File or Directory you want to parse",
 				},
 				cli.StringSliceFlag{
-					Name: "file, f",
+					Name:  "ignore, I",
+					Usage: "File or Directory you want to ignore parsing",
 				},
 				cli.StringFlag{
 					Name:  "out, o",

@@ -8,26 +8,27 @@ example (self-reference):
 Note that the interface of this library is still ALPHA level quality.  
 Breaking changes will be introduced frequently.  
 
-## Getting Started
+## Usage
 
-```sh
+```console
 $ go get -u github.com/kazukousen/gouml/cmd/gouml
+$ gouml --version
 ```
 
 Run `gouml init` (or `gouml i`) . This will parse `.go` files and generate the plantUML file.  
 
-### Directory-base
-If you requires point to base directory, you can use `-d` flag.  
-
 ```console
-$ gouml i -d path/to/package/
+$ gouml i -f /path/to/package/subpackage1/ -f /path/to/package/subpackage2/foo.go
 ```
 
-### File-base
-If you requires parse one `.go` file. you can use `-f` flag.
+Fire or Directory you want to parse, you can use `-f` flag.  
+
+### Ignore a target directory or file
+
+You can use `--ignore` Flag.  
 
 ```console
-$ gouml i -f path/to/package/foo.go -f path/to/package/bar.go
+$ gouml i -f /path/to/package/ --ignore /path/to/package/ignorepackage/
 ```
 
 ## License

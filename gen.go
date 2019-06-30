@@ -17,29 +17,31 @@ import (
 
 // Generator ...
 type Generator interface {
+	UpdateIgnore(path string) error
 	Read(path string) error
-	ReadDir(baseDir string) error
 	WriteTo(buf *bytes.Buffer) error
 }
 
 type generator struct {
-	parser  Parser
-	targets []string
-	fset    *token.FileSet
-	astPkgs map[string]*ast.Package
-	pkgs    []*types.Package
-	isDebug bool
+	parser      Parser
+	targets     []string
+	ignoreFiles map[string]struct{}
+	fset        *token.FileSet
+	astPkgs     map[string]*ast.Package
+	pkgs        []*types.Package
+	isDebug     bool
 }
 
 // NewGenerator ...
 func NewGenerator(parser Parser, isDebug bool) Generator {
 	return &generator{
-		parser:  parser,
-		targets: []string{},
-		fset:    token.NewFileSet(),
-		astPkgs: map[string]*ast.Package{},
-		pkgs:    []*types.Package{},
-		isDebug: isDebug,
+		parser:      parser,
+		targets:     []string{},
+		ignoreFiles: map[string]struct{}{},
+		fset:        token.NewFileSet(),
+		astPkgs:     map[string]*ast.Package{},
+		pkgs:        []*types.Package{},
+		isDebug:     isDebug,
 	}
 }
 
@@ -56,17 +58,21 @@ func (g generator) WriteTo(buf *bytes.Buffer) error {
 }
 
 func (g *generator) Read(path string) error {
+	fInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	if fInfo.IsDir() {
+		if err := filepath.Walk(path, g.visit); err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if err := g.visit(path, nil, nil); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (g *generator) ReadDir(baseDir string) error {
-	if err := filepath.Walk(baseDir, g.visit); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -81,7 +87,38 @@ func (g *generator) visit(path string, f os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
+	if _, ok := g.ignoreFiles[path]; ok {
+		return nil
+	}
 	g.targets = append(g.targets, path)
+	return nil
+}
+
+func (g *generator) UpdateIgnore(path string) error {
+	fInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	if fInfo.IsDir() {
+		if err := filepath.Walk(path, g.updateIgnore); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := g.updateIgnore(path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *generator) updateIgnore(path string, f os.FileInfo, err error) error {
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	g.ignoreFiles[path] = struct{}{}
 	return nil
 }
 
