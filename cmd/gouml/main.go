@@ -24,18 +24,14 @@ func main() {
 				gen := gouml.NewGenerator(gouml.PlantUMLParser(), c.Bool("verbose"))
 
 				if ignoreFiles := c.StringSlice("ignore"); len(ignoreFiles) > 0 {
-					for _, file := range ignoreFiles {
-						if err := gen.UpdateIgnore(file); err != nil {
-							return err
-						}
+					if err := gen.UpdateIgnore(ignoreFiles); err != nil {
+						return err
 					}
 				}
 
 				if files := c.StringSlice("file"); len(files) > 0 {
-					for _, file := range files {
-						if err := gen.Read(file); err != nil {
-							return err
-						}
+					if err := gen.Read(files); err != nil {
+						return err
 					}
 				}
 

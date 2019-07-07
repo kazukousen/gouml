@@ -17,8 +17,8 @@ import (
 
 // Generator ...
 type Generator interface {
-	UpdateIgnore(path string) error
-	Read(path string) error
+	UpdateIgnore(files []string) error
+	Read(files []string) error
 	WriteTo(buf *bytes.Buffer) error
 }
 
@@ -57,20 +57,29 @@ func (g generator) WriteTo(buf *bytes.Buffer) error {
 	return nil
 }
 
-func (g *generator) Read(path string) error {
-	fInfo, err := os.Stat(path)
+func (g *generator) Read(files []string) error {
+	for _, f := range files {
+		if err := g.read(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *generator) read(f string) error {
+	fInfo, err := os.Stat(f)
 	if err != nil {
 		return err
 	}
 
 	if fInfo.IsDir() {
-		if err := filepath.Walk(path, g.visit); err != nil {
+		if err := filepath.Walk(f, g.visit); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	if err := g.visit(path, nil, nil); err != nil {
+	if err := g.visit(f, nil, nil); err != nil {
 		return err
 	}
 	return nil
@@ -94,26 +103,35 @@ func (g *generator) visit(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
-func (g *generator) UpdateIgnore(path string) error {
-	fInfo, err := os.Stat(path)
+func (g *generator) UpdateIgnore(files []string) error {
+	for _, f := range files {
+		if err := g.updateIgnore(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *generator) updateIgnore(f string) error {
+	fInfo, err := os.Stat(f)
 	if err != nil {
 		return err
 	}
 
 	if fInfo.IsDir() {
-		if err := filepath.Walk(path, g.updateIgnore); err != nil {
+		if err := filepath.Walk(f, g.doUpdateIgnore); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	if err := g.updateIgnore(path, nil, nil); err != nil {
+	if err := g.doUpdateIgnore(f, nil, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (g *generator) updateIgnore(path string, f os.FileInfo, err error) error {
+func (g *generator) doUpdateIgnore(path string, f os.FileInfo, err error) error {
 	path, err = filepath.Abs(path)
 	if err != nil {
 		return err
