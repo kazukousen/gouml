@@ -29,10 +29,12 @@ func main() {
 					}
 				}
 
-				if files := c.StringSlice("file"); len(files) > 0 {
-					if err := gen.Read(files); err != nil {
-						return err
-					}
+				files := c.StringSlice("file")
+				if len(files) == 0 {
+					files = []string{"./"}
+				}
+				if err := gen.Read(files); err != nil {
+					return err
 				}
 
 				out, err := filepath.Abs(c.String("out"))
@@ -57,7 +59,6 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
 					Name:  "file, f",
-					Value: &cli.StringSlice{"./"},
 					Usage: "File or Directory you want to parse",
 				},
 				cli.StringSliceFlag{
