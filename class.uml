@@ -2,8 +2,8 @@
 
 package "gouml" {
 	interface "Generator" as gouml.Generator {
-		+Read(path: string): error
-		+UpdateIgnore(path: string): error
+		+Read(files: []string): error
+		+UpdateIgnore(files: []string): error
 		+WriteTo(buf: *bytes.Buffer): error
 	}
 }
@@ -29,10 +29,12 @@ package "gouml" {
 		-pkgs: types.Package
 		-isDebug: bool
 		+WriteTo(buf: *bytes.Buffer): error
-		+Read(path: string): error
+		+Read(files: []string): error
+		-read(f: string): error
 		-visit(path: string, f: os.FileInfo, err: error): error
-		+UpdateIgnore(path: string): error
-		-updateIgnore(path: string, f: os.FileInfo, err: error): error
+		+UpdateIgnore(files: []string): error
+		-updateIgnore(f: string): error
+		-doUpdateIgnore(path: string, f: os.FileInfo, err: error): error
 		-ast(): error
 		-check(): error
 	}

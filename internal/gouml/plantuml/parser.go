@@ -53,12 +53,8 @@ func (p *parser) Build(pkgs []*types.Package) {
 }
 
 func (p parser) WriteTo(buf *bytes.Buffer) {
-	buf.WriteString("@startuml")
-	newline(buf, 0)
 	p.models.WriteTo(buf, p.ex)
 	p.notes.WriteTo(buf)
 	newline(buf, 0)
-	newline(buf, 0)
-	buf.WriteString("@enduml")
 	newline(buf, 0)
 }

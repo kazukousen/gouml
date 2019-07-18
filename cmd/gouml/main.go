@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,6 +13,20 @@ import (
 )
 
 func main() {
+	flags := []cli.Flag{
+		cli.StringSliceFlag{
+			Name:  "file, f",
+			Usage: "File or Directory you want to parse",
+		},
+		cli.StringSliceFlag{
+			Name:  "ignore, I",
+			Usage: "File or Directory you want to ignore parsing",
+		},
+		cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "debugging",
+		},
+	}
 	app := cli.NewApp()
 	app.Version = "0.2"
 	app.Usage = "Automatically generate PlantUML from Go Code."
@@ -19,66 +34,84 @@ func main() {
 		{
 			Name:    "init",
 			Aliases: []string{"i"},
-			Usage:   "Create *.uml",
+			Usage:   "Create *.puml",
 			Action: func(c *cli.Context) error {
-				gen := gouml.NewGenerator(gouml.PlantUMLParser(), c.Bool("verbose"))
-
-				if ignoreFiles := c.StringSlice("ignore"); len(ignoreFiles) > 0 {
-					if err := gen.UpdateIgnore(ignoreFiles); err != nil {
-						return err
-					}
-				}
-
-				files := c.StringSlice("file")
-				if len(files) == 0 {
-					files = []string{"./"}
-				}
-				if err := gen.Read(files); err != nil {
-					return err
-				}
-
-				out, err := filepath.Abs(c.String("out"))
-				if err != nil {
-					return err
-				}
-
 				buf := &bytes.Buffer{}
-				gen.WriteTo(buf)
+				buf.WriteString("@startuml\n")
+				if err := generate(buf, c.StringSlice("ignore"), c.StringSlice("file"), c.Bool("verbose")); err != nil {
+					return err
+				}
+				buf.WriteString("@enduml\n")
 
-				uml, err := os.Create(out)
+				out := c.String("out")
+				out, err := filepath.Abs(out)
 				if err != nil {
 					return err
 				}
-				defer uml.Close()
-				fmt.Fprintf(uml, buf.String())
+				if err := writeFile(out, buf); err != nil {
+					return err
+				}
 				fmt.Printf("output to file: %s\n", out)
-
-				fmt.Printf("SVG: http://plantuml.com/plantuml/svg/%s\n", gouml.Compress(buf.String()))
 				return nil
 			},
-			Flags: []cli.Flag{
-				cli.StringSliceFlag{
-					Name:  "file, f",
-					Usage: "File or Directory you want to parse",
-				},
-				cli.StringSliceFlag{
-					Name:  "ignore, I",
-					Usage: "File or Directory you want to ignore parsing",
-				},
+			Flags: append(flags, []cli.Flag{
 				cli.StringFlag{
 					Name:  "out, o",
-					Value: "class.uml",
+					Value: "file.puml",
 					Usage: "File Name you want to parsed",
 				},
-				cli.BoolFlag{
-					Name:  "verbose",
-					Usage: "debugging",
-				},
+			}...),
+		},
+		{
+			Name:    "encode",
+			Aliases: []string{"e"},
+			Usage:   "encode base64",
+			Action: func(c *cli.Context) error {
+				buf := &bytes.Buffer{}
+				if err := generate(buf, c.StringSlice("ignore"), c.StringSlice("file"), c.Bool("verbose")); err != nil {
+					return err
+				}
+
+				fmt.Printf(gouml.Compress(buf.String()))
+				return nil
 			},
+			Flags: append(flags, []cli.Flag{}...),
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func generate(buf *bytes.Buffer, ignores []string, targets []string, verbose bool) error {
+	gen := gouml.NewGenerator(gouml.PlantUMLParser(), verbose)
+	if len(ignores) > 0 {
+		if err := gen.UpdateIgnore(ignores); err != nil {
+			return err
+		}
+	}
+	if len(targets) == 0 {
+		targets = []string{"./"}
+	}
+	if err := gen.Read(targets); err != nil {
+		return err
+	}
+
+	gen.WriteTo(buf)
+	return nil
+}
+
+func writeFile(file string, buf io.Reader) (e error) {
+	f, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			e = err
+		}
+	}()
+	io.Copy(f, buf)
+	return
 }

@@ -142,7 +142,9 @@ func (g *generator) doUpdateIgnore(path string, f os.FileInfo, err error) error 
 
 func (g generator) ast() error {
 	for _, path := range g.targets {
-		fmt.Printf("parsing AST: %s\n", path)
+		if g.isDebug {
+			fmt.Printf("parsing AST: %s\n", path)
+		}
 		astFile, err := parser.ParseFile(g.fset, path, nil, parser.ParseComments)
 		if err != nil {
 			return xerrors.Errorf("ParseFile panic: %w", err)
