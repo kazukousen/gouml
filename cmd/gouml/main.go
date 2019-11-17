@@ -14,15 +14,15 @@ import (
 
 func main() {
 	flags := []cli.Flag{
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "file, f",
 			Usage: "File or Directory you want to parse",
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "ignore, I",
 			Usage: "File or Directory you want to ignore parsing",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "verbose",
 			Usage: "debugging",
 		},
@@ -30,7 +30,7 @@ func main() {
 	app := cli.NewApp()
 	app.Version = "0.2"
 	app.Usage = "Automatically generate PlantUML from Go Code."
-	app.Commands = []cli.Command{
+	app.Commands = []*cli.Command{
 		{
 			Name:    "init",
 			Aliases: []string{"i"},
@@ -55,7 +55,7 @@ func main() {
 				return nil
 			},
 			Flags: append(flags, []cli.Flag{
-				cli.StringFlag{
+				&cli.StringFlag{
 					Name:  "out, o",
 					Value: "file.puml",
 					Usage: "File Name you want to parsed",
