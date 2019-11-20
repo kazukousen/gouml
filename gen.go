@@ -11,8 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/xerrors"
 )
 
 // Generator ...
@@ -147,7 +145,7 @@ func (g generator) ast() error {
 		}
 		astFile, err := parser.ParseFile(g.fset, path, nil, parser.ParseComments)
 		if err != nil {
-			return xerrors.Errorf("ParseFile panic: %w", err)
+			return fmt.Errorf("ParseFile panic: %w", err)
 		}
 		name := astFile.Name.Name
 		pkg, ok := g.astPkgs[name]
