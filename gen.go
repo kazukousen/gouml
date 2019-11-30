@@ -10,7 +10,13 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
+	"time"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 )
 
 // Generator ...
@@ -21,6 +27,7 @@ type Generator interface {
 }
 
 type generator struct {
+	logger      log.Logger
 	parser      Parser
 	targets     []string
 	ignoreFiles map[string]struct{}
@@ -28,11 +35,13 @@ type generator struct {
 	astPkgs     map[string]*ast.Package
 	pkgs        []*types.Package
 	isDebug     bool
+	mu          *sync.Mutex
 }
 
 // NewGenerator ...
-func NewGenerator(parser Parser, isDebug bool) Generator {
+func NewGenerator(logger log.Logger, parser Parser, isDebug bool) Generator {
 	return &generator{
+		logger:      log.With(logger, "component", "generator"),
 		parser:      parser,
 		targets:     []string{},
 		ignoreFiles: map[string]struct{}{},
@@ -40,6 +49,7 @@ func NewGenerator(parser Parser, isDebug bool) Generator {
 		astPkgs:     map[string]*ast.Package{},
 		pkgs:        []*types.Package{},
 		isDebug:     isDebug,
+		mu:          &sync.Mutex{},
 	}
 }
 
@@ -56,6 +66,12 @@ func (g generator) WriteTo(buf *bytes.Buffer) error {
 }
 
 func (g *generator) Read(files []string) error {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		level.Debug(g.logger).Log("msg", "read .go files", "ms", elapsed.Milliseconds())
+	}()
+
 	for _, f := range files {
 		if err := g.read(f); err != nil {
 			return err
@@ -139,6 +155,12 @@ func (g *generator) doUpdateIgnore(path string, f os.FileInfo, err error) error 
 }
 
 func (g generator) ast() error {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		level.Debug(g.logger).Log("msg", "parsed to AST", "ms", elapsed.Milliseconds())
+	}()
+
 	for _, path := range g.targets {
 		if g.isDebug {
 			fmt.Printf("parsing AST: %s\n", path)
@@ -162,6 +184,12 @@ func (g generator) ast() error {
 }
 
 func (g *generator) check() error {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		level.Debug(g.logger).Log("msg", "checked type", "ms", elapsed.Milliseconds())
+	}()
+
 	conf := types.Config{
 		Importer: importer.For("source", nil),
 		Error: func(err error) {
@@ -170,13 +198,36 @@ func (g *generator) check() error {
 			}
 		},
 	}
+	wg := &sync.WaitGroup{}
+	num := runtime.NumCPU()
+	ch := make(chan *ast.Package, len(g.astPkgs))
+	for i := 0; i < num; i++ {
+		go g.workChecker(wg, conf, ch)
+	}
 	for _, astPkg := range g.astPkgs {
+		wg.Add(1)
+		ch <- astPkg
+	}
+	wg.Wait()
+	close(ch)
+	return nil
+}
+
+func (g *generator) appendPackage(pkg *types.Package) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.pkgs = append(g.pkgs, pkg)
+}
+
+func (g *generator) workChecker(wg *sync.WaitGroup, conf types.Config, ch <-chan *ast.Package) {
+	for astPkg := range ch {
 		files := []*ast.File{}
 		for _, f := range astPkg.Files {
 			files = append(files, f)
 		}
 		pkg, _ := conf.Check(astPkg.Name, g.fset, files, nil)
-		g.pkgs = append(g.pkgs, pkg)
+		g.appendPackage(pkg)
+
+		wg.Done()
 	}
-	return nil
 }
