@@ -3,11 +3,16 @@ package plantuml
 import (
 	"bytes"
 	"go/types"
+	"time"
+
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 )
 
 // NewParser ...
-func NewParser() *parser {
+func NewParser(logger log.Logger) *parser {
 	return &parser{
+		logger: log.With(logger, "component", "parser"),
 		models: Models{},
 		notes:  Notes{},
 		ex:     exists{},
@@ -15,12 +20,19 @@ func NewParser() *parser {
 }
 
 type parser struct {
+	logger log.Logger
 	models Models
 	notes  Notes
 	ex     exists
 }
 
 func (p *parser) Build(pkgs []*types.Package) {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		level.Debug(p.logger).Log("msg", "built uml", "ms", elapsed.Milliseconds())
+	}()
+
 	objects := []types.Object{}
 	for _, pkg := range pkgs {
 		scope := pkg.Scope()
@@ -53,6 +65,12 @@ func (p *parser) Build(pkgs []*types.Package) {
 }
 
 func (p parser) WriteTo(buf *bytes.Buffer) {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		level.Debug(p.logger).Log("msg", "write to file", "ms", elapsed.Milliseconds())
+	}()
+
 	p.models.WriteTo(buf, p.ex)
 	p.notes.WriteTo(buf)
 	newline(buf, 0)
