@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/kazukousen/gouml"
 	"github.com/urfave/cli"
 )
 
 func main() {
+	logger := log.NewLogfmtLogger(os.Stdout)
+	logger = log.With(logger, "ts", log.DefaultTimestamp)
+
 	flags := []cli.Flag{
 		&cli.StringSliceFlag{
 			Name:  "file, f",
@@ -30,7 +34,7 @@ func main() {
 	app := cli.NewApp()
 	app.Version = "0.2"
 	app.Usage = "Automatically generate PlantUML from Go Code."
-	app.Commands = []*cli.Command{
+	app.Commands = []cli.Command{
 		{
 			Name:    "init",
 			Aliases: []string{"i"},
@@ -38,7 +42,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 				buf := &bytes.Buffer{}
 				buf.WriteString("@startuml\n")
-				if err := generate(buf, c.StringSlice("ignore"), c.StringSlice("file"), c.Bool("verbose")); err != nil {
+				if err := generate(logger, buf, c.StringSlice("ignore"), c.StringSlice("file"), c.Bool("verbose")); err != nil {
 					return err
 				}
 				buf.WriteString("@enduml\n")
@@ -68,7 +72,7 @@ func main() {
 			Usage:   "encode base64",
 			Action: func(c *cli.Context) error {
 				buf := &bytes.Buffer{}
-				if err := generate(buf, c.StringSlice("ignore"), c.StringSlice("file"), c.Bool("verbose")); err != nil {
+				if err := generate(logger, buf, c.StringSlice("ignore"), c.StringSlice("file"), c.Bool("verbose")); err != nil {
 					return err
 				}
 
@@ -80,12 +84,12 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log("msg", "failed to run", "error", err)
 	}
 }
 
-func generate(buf *bytes.Buffer, ignores []string, targets []string, verbose bool) error {
-	gen := gouml.NewGenerator(gouml.PlantUMLParser(), verbose)
+func generate(logger log.Logger, buf *bytes.Buffer, ignores []string, targets []string, verbose bool) error {
+	gen := gouml.NewGenerator(logger, gouml.PlantUMLParser(logger), verbose)
 	if len(ignores) > 0 {
 		if err := gen.UpdateIgnore(ignores); err != nil {
 			return err
