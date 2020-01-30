@@ -30,7 +30,7 @@ func (p *parser) Build(pkgs []*types.Package) {
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		level.Debug(p.logger).Log("msg", "built uml", "ms", elapsed.Milliseconds())
+		level.Debug(p.logger).Log("msg", "built uml", "ms", elapsed.Truncate(time.Millisecond))
 	}()
 
 	objects := []types.Object{}
@@ -68,7 +68,7 @@ func (p parser) WriteTo(buf *bytes.Buffer) {
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		level.Debug(p.logger).Log("msg", "write to file", "ms", elapsed.Milliseconds())
+		level.Debug(p.logger).Log("msg", "write to file", "ms", elapsed.Truncate(time.Millisecond))
 	}()
 
 	p.models.WriteTo(buf, p.ex)

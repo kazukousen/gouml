@@ -69,7 +69,7 @@ func (g *generator) Read(files []string) error {
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		level.Debug(g.logger).Log("msg", "read .go files", "ms", elapsed.Milliseconds())
+		level.Debug(g.logger).Log("msg", "read .go files", "ms", elapsed.Truncate(time.Millisecond))
 	}()
 
 	for _, f := range files {
@@ -158,7 +158,7 @@ func (g generator) ast() error {
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		level.Debug(g.logger).Log("msg", "parsed to AST", "ms", elapsed.Milliseconds())
+		level.Debug(g.logger).Log("msg", "parsed to AST", "ms", elapsed.Truncate(time.Millisecond))
 	}()
 
 	for _, path := range g.targets {
@@ -187,7 +187,7 @@ func (g *generator) check() error {
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		level.Debug(g.logger).Log("msg", "checked type", "ms", elapsed.Milliseconds())
+		level.Debug(g.logger).Log("msg", "checked type", "ms", elapsed.Truncate(time.Millisecond))
 	}()
 
 	conf := types.Config{
