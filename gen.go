@@ -10,9 +10,7 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -35,7 +33,6 @@ type generator struct {
 	astPkgs     map[string]*ast.Package
 	pkgs        []*types.Package
 	isDebug     bool
-	mu          *sync.Mutex
 }
 
 // NewGenerator ...
@@ -49,7 +46,6 @@ func NewGenerator(logger log.Logger, parser Parser, isDebug bool) Generator {
 		astPkgs:     map[string]*ast.Package{},
 		pkgs:        []*types.Package{},
 		isDebug:     isDebug,
-		mu:          &sync.Mutex{},
 	}
 }
 
@@ -198,36 +194,13 @@ func (g *generator) check() error {
 			}
 		},
 	}
-	wg := &sync.WaitGroup{}
-	num := runtime.NumCPU()
-	ch := make(chan *ast.Package, len(g.astPkgs))
-	for i := 0; i < num; i++ {
-		go g.workChecker(wg, conf, ch)
-	}
 	for _, astPkg := range g.astPkgs {
-		wg.Add(1)
-		ch <- astPkg
-	}
-	wg.Wait()
-	close(ch)
-	return nil
-}
-
-func (g *generator) appendPackage(pkg *types.Package) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.pkgs = append(g.pkgs, pkg)
-}
-
-func (g *generator) workChecker(wg *sync.WaitGroup, conf types.Config, ch <-chan *ast.Package) {
-	for astPkg := range ch {
-		files := []*ast.File{}
+		files := make([]*ast.File, 0, len(astPkg.Files))
 		for _, f := range astPkg.Files {
 			files = append(files, f)
 		}
 		pkg, _ := conf.Check(astPkg.Name, g.fset, files, nil)
-		g.appendPackage(pkg)
-
-		wg.Done()
+		g.pkgs = append(g.pkgs, pkg)
 	}
+	return nil
 }
